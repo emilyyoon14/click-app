@@ -1,0 +1,2976 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>click — 귀찮을 땐, 그냥 click 하세요.</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link rel="stylesheet" as="style" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable.min.css" />
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#EAF6FC;
+    --ink:#132635;
+    --ink-2:#FFFFFF;
+    --paper:#FFFFFF;
+    --paper-dim:#DCEFF8;
+    --flash:#5EC8F2;
+    --flash-deep:#0E86C4;
+    --coral:#FF5A36;
+    --mint:#2FAE8C;
+    --muted:#5E7C8C;
+    --muted-on-paper:#5C7382;
+    --line: rgba(19,38,53,0.10);
+    --font-display:'Pretendard Variable', 'Pretendard', sans-serif;
+    --font-body:'Pretendard Variable', 'Pretendard', sans-serif;
+    --font-mono:'JetBrains Mono', monospace;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html{scroll-behavior:smooth;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--font-body);
+    -webkit-font-smoothing:antialiased;
+    overflow-x:hidden;
+  }
+  img,svg{display:block;}
+  a{color:inherit; text-decoration:none;}
+  .wrap{max-width:1120px; margin:0 auto; padding:0 28px;}
+  .eyebrow{
+    font-family:var(--font-mono);
+    font-size:12px;
+    letter-spacing:.14em;
+    text-transform:uppercase;
+    color:var(--flash-deep);
+  }
+
+  /* ===== NAV ===== */
+  nav{
+    position:sticky; top:0; z-index:40;
+    background:rgba(251,249,243,0.82);
+    backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  nav .wrap{
+    display:flex; align-items:center; justify-content:space-between;
+    height:64px;
+  }
+  .logo{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:20px;
+    letter-spacing:-0.02em;
+  }
+  .logo .dot{color:var(--flash);}
+  .nav-actions{
+    display:flex; align-items:center; gap:18px;
+  }
+  .nav-link{
+    font-size:14px;
+    color:var(--muted);
+    background:none;
+    border:none;
+    padding:0;
+    font-family:var(--font-body);
+    cursor:pointer;
+    transition:color .2s ease;
+  }
+  .nav-link:hover{ color:var(--ink); }
+  .nav-cta{
+    font-family:var(--font-mono);
+    font-size:13px;
+    background:transparent;
+    color:var(--ink);
+    border:1px solid var(--line);
+    padding:9px 16px;
+    border-radius:100px;
+    cursor:pointer;
+    transition:border-color .2s ease, color .2s ease, background .2s ease;
+  }
+  .nav-cta:hover{ border-color:var(--flash-deep); color:var(--flash-deep); }
+
+  /* ===== HERO ===== */
+  .hero{
+    position:relative;
+    min-height:92vh;
+    display:flex; flex-direction:column; align-items:center; justify-content:center;
+    text-align:center;
+    padding:80px 24px 60px;
+    background:
+      radial-gradient(ellipse 60% 45% at 50% 8%, rgba(94,200,242,0.28), transparent 60%),
+      var(--bg);
+  }
+  .hero-tag{margin-bottom:22px;}
+  .hero h1{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:clamp(34px, 6.4vw, 68px);
+    line-height:1.12;
+    letter-spacing:-0.03em;
+    max-width:820px;
+  }
+  .hero h1 em{
+    font-style:normal;
+    color:var(--flash-deep);
+  }
+  .hero p.sub{
+    margin-top:20px;
+    font-size:clamp(15px,2vw,18px);
+    color:var(--muted);
+    max-width:520px;
+    line-height:1.6;
+  }
+
+  /* Shutter button */
+  .shutter-zone{
+    margin-top:56px;
+    position:relative;
+    width:220px; height:220px;
+  }
+  .shutter{
+    position:relative;
+    width:100%; height:100%;
+    border-radius:50%;
+    border:none;
+    cursor:pointer;
+    background:transparent;
+    display:flex; align-items:center; justify-content:center;
+  }
+  .shutter-outline{
+    position:absolute; inset:0;
+    border-radius:50%;
+    border:1.5px dashed rgba(24,26,32,0.22);
+    animation:spin 26s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+  .blade-ring{
+    position:absolute; inset:14px;
+    border-radius:50%;
+    overflow:hidden;
+  }
+  .blade{
+    position:absolute;
+    top:50%; left:50%;
+    width:0; height:0;
+    border-left:52px solid transparent;
+    border-right:52px solid transparent;
+    border-bottom:104px solid var(--flash);
+    transform-origin:50% 100%;
+    transform:translate(-50%,-100%) rotate(calc(45deg * var(--i))) scaleY(0.02);
+    transition:transform .32s cubic-bezier(.65,0,.35,1);
+    opacity:0.96;
+  }
+  .shutter.closed .blade{
+    transform:translate(-50%,-100%) rotate(calc(45deg * var(--i))) scaleY(1.02);
+    transition-delay:calc(var(--i) * 18ms);
+  }
+  .shutter-core{
+    position:relative; z-index:5;
+    width:120px; height:120px;
+    border-radius:50%;
+    background:var(--ink);
+    border:2px solid var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    box-shadow:0 0 0 6px var(--ink);
+    transition:transform .12s ease;
+  }
+  .shutter:active .shutter-core{ transform:scale(0.94); }
+  .shutter-core::after{
+    content:"";
+    width:14px; height:14px;
+    border-radius:50%;
+    background:var(--flash);
+  }
+  .flash-overlay{
+    position:fixed; inset:0;
+    background:#fff;
+    opacity:0;
+    pointer-events:none;
+    z-index:100;
+  }
+  .flash-overlay.flashing{
+    animation:flash .38s ease-out;
+  }
+  @keyframes flash{
+    0%{ opacity:0; }
+    12%{ opacity:0.92; }
+    100%{ opacity:0; }
+  }
+  .toast{
+    position:fixed;
+    bottom:32px; left:50%;
+    transform:translate(-50%, 20px);
+    background:var(--ink);
+    color:var(--bg);
+    font-family:var(--font-mono);
+    font-size:13px;
+    padding:12px 20px;
+    border-radius:100px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .3s ease, transform .3s ease;
+    z-index:90;
+    white-space:nowrap;
+  }
+  .toast.show{ opacity:1; transform:translate(-50%, 0); }
+
+  /* ===== AUTH MODAL ===== */
+  .modal-overlay{
+    position:fixed; inset:0;
+    background:rgba(24,26,32,0.46);
+    backdrop-filter:blur(3px);
+    display:flex; align-items:center; justify-content:center;
+    padding:20px;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .22s ease;
+    z-index:200;
+  }
+  .modal-overlay.open{ opacity:1; pointer-events:auto; }
+  .modal-card{
+    position:relative;
+    width:100%; max-width:380px;
+    max-height:88vh;
+    overflow-y:auto;
+    background:var(--paper);
+    color:var(--ink);
+    border-radius:20px;
+    padding:36px 30px 30px;
+    box-shadow:0 40px 80px -30px rgba(0,0,0,0.5);
+    transform:translateY(14px) scale(0.98);
+    transition:transform .22s ease;
+  }
+  .modal-overlay.open .modal-card{ transform:translateY(0) scale(1); }
+  .modal-close{
+    position:absolute; top:16px; right:16px;
+    width:30px; height:30px;
+    border-radius:50%;
+    border:none;
+    background:var(--paper-dim);
+    color:var(--ink);
+    cursor:pointer;
+    font-size:13px;
+  }
+  .modal-card h3{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:22px;
+    margin-top:10px;
+    letter-spacing:-0.01em;
+  }
+  .modal-sub{
+    font-size:13.5px;
+    color:var(--muted-on-paper);
+    margin-top:8px;
+    line-height:1.6;
+    margin-bottom:22px;
+  }
+  .field-label{
+    display:block;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted-on-paper);
+    margin-bottom:8px;
+    letter-spacing:.04em;
+  }
+  .field-input{
+    width:100%;
+    font-family:var(--font-body);
+    font-size:15px;
+    padding:13px 14px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:#FFFFFF;
+    color:var(--ink);
+    margin-bottom:16px;
+    outline:none;
+    transition:border-color .18s ease;
+  }
+  .field-input:focus{ border-color:var(--flash-deep); }
+  .field-error{
+    font-size:12px;
+    color:var(--coral);
+    margin:-10px 0 14px;
+    min-height:14px;
+  }
+  .field-submit{
+    width:100%;
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:14px;
+    padding:13px 14px;
+    border-radius:10px;
+    border:none;
+    background:var(--ink);
+    color:var(--flash);
+    cursor:pointer;
+    transition:opacity .18s ease;
+  }
+  .field-submit:hover{ opacity:0.88; }
+
+  .modal-panel{ display:none; }
+  .modal-panel.active{ display:block; }
+
+  /* ===== FULLPAGE (dedicated signup screens) ===== */
+  .fullpage{
+    position:fixed; inset:0;
+    background:var(--bg);
+    z-index:300;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    text-align:center;
+    padding:80px 24px 60px;
+    overflow-y:auto;
+  }
+  .fullpage.active{ display:flex; }
+  .page-inner{
+    width:100%; max-width:400px;
+    margin:0 auto;
+  }
+  .page-title{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:clamp(24px,4vw,32px);
+    letter-spacing:-0.02em;
+    margin-top:12px;
+    margin-bottom:10px;
+  }
+  .fullpage .sub{
+    font-size:14.5px;
+    color:var(--muted);
+    line-height:1.6;
+    margin-bottom:34px;
+  }
+  .page-form{ text-align:left; }
+  .page-close{
+    position:absolute; top:24px; right:24px;
+    background:var(--paper-dim);
+  }
+  .page-back{
+    position:absolute; top:26px; left:24px;
+    background:none; border:none;
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .page-back:hover{ color:var(--ink); }
+  .page-submit{ margin-top:6px; }
+
+  /* Vertical job list */
+  .job-list{
+    display:flex; flex-direction:column; gap:12px;
+    margin-bottom:18px;
+    text-align:left;
+  }
+  .job-row{
+    display:flex; flex-direction:column;
+    width:100%;
+    padding:20px 20px;
+    border-radius:16px;
+    border:1.5px solid var(--line);
+    background:#FFFFFF;
+    color:var(--ink);
+    cursor:pointer;
+    text-align:left;
+    transition:border-color .18s ease, background .18s ease, transform .12s ease;
+  }
+  .job-row:hover{ transform:translateY(-1px); }
+  .job-row-label{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:16px;
+  }
+  .job-row-desc{
+    font-size:12.5px;
+    color:var(--muted-on-paper);
+    margin-top:4px;
+  }
+  .job-row.selected{
+    background:var(--ink);
+    border-color:var(--ink);
+  }
+  .job-row.selected .job-row-label{ color:var(--flash); }
+  .job-row.selected .job-row-desc{ color:rgba(251,249,243,0.65); }
+  .job-custom-input{
+    display:none;
+  }
+  .job-custom-input.show{ display:block; }
+
+  /* ===== APP HOME ===== */
+  .app-home{
+    position:fixed; inset:0;
+    background:var(--bg);
+    z-index:300;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:flex-start;
+    text-align:center;
+    padding:60px 24px 60px;
+    overflow-y:auto;
+  }
+  .app-home.active{ display:flex; }
+  .home-capture, .home-preview, .home-result, .home-schedule{
+    width:100%; max-width:min(760px, 94vw);
+  }
+  @media (min-width: 860px){
+    .app-home{ justify-content:center; }
+    .home-capture, .home-preview, .home-result, .home-schedule{ max-width:min(900px, 94vw); }
+    .result-card{ text-align:left; }
+    .result-card-inner-row{
+      display:flex;
+      gap:26px;
+      align-items:flex-start;
+    }
+    .result-thumb-wrap{
+      flex:0 0 300px;
+      margin-bottom:0;
+    }
+    .result-card-text{ flex:1; min-width:0; }
+  }
+  .home-close{
+    position:absolute; top:24px; right:24px;
+    background:var(--paper-dim);
+  }
+  .home-greet{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:clamp(28px,5vw,44px);
+    letter-spacing:-0.02em;
+    margin-top:12px;
+  }
+  .app-home .sub{
+    margin-top:14px;
+    font-size:15px;
+    color:var(--muted);
+    max-width:420px;
+  }
+  .home-capture{ display:flex; flex-direction:column; align-items:center; }
+  .home-preview{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+  }
+  .home-preview.active{ display:flex; }
+  .home-capture.hidden{ display:none; }
+  .preview-thumb-wrap{
+    width:100%;
+    aspect-ratio:4/3;
+    border-radius:16px;
+    overflow:hidden;
+    background:var(--paper-dim);
+    margin:18px 0 22px;
+    border:1.5px solid var(--line);
+  }
+  .preview-pdf-box{
+    width:100%;
+    aspect-ratio:4/3;
+    border-radius:16px;
+    background:var(--paper-dim);
+    margin:18px 0 22px;
+    border:1.5px solid var(--line);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:10px;
+  }
+  .preview-pdf-icon{ font-size:44px; }
+  .preview-pdf-name{
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:var(--muted-on-paper);
+    padding:0 20px;
+    text-align:center;
+    word-break:break-all;
+  }
+  .pdf-thumb-icon{
+    width:100%; height:100%;
+    display:flex; align-items:center; justify-content:center;
+    font-size:28px;
+    background:var(--paper-dim);
+  }
+  .preview-thumb{
+    width:100%; height:100%;
+    object-fit:cover;
+    display:block;
+  }
+  .home-preview .field-label{ align-self:flex-start; }
+  .home-preview .field-input{ width:100%; }
+  .home-preview .field-submit{ width:100%; margin-top:4px; }
+  .preview-back{
+    margin-top:14px;
+    background:none; border:none;
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .preview-back:hover{ color:var(--ink); }
+  .shutter-caption{
+    margin-top:18px;
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--muted);
+    letter-spacing:.04em;
+  }
+  .job-badge{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:10px;
+    padding:6px 14px;
+    border-radius:100px;
+    background:var(--ink);
+    color:var(--flash);
+    font-family:var(--font-mono);
+    font-size:12px;
+    font-weight:700;
+  }
+  .suggest-chips{
+    display:flex;
+    flex-wrap:wrap;
+    gap:8px;
+    margin-bottom:18px;
+    width:100%;
+  }
+  .suggest-chip{
+    font-family:var(--font-body);
+    font-size:12.5px;
+    padding:8px 13px;
+    border-radius:100px;
+    border:1.5px solid var(--line);
+    background:#FFFFFF;
+    color:var(--ink);
+    cursor:pointer;
+    transition:border-color .18s ease, background .18s ease;
+  }
+  .suggest-chip:hover{ border-color:var(--flash-deep); }
+  .suggest-chip.picked{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:var(--flash);
+  }
+
+  .home-topbar{
+    position:absolute; top:24px; left:24px;
+    display:flex;
+    gap:8px;
+    z-index:10;
+  }
+  .topbar-btn{
+    background:var(--paper-dim);
+    border:none;
+    border-radius:100px;
+    padding:9px 16px;
+    font-family:var(--font-mono);
+    font-size:12.5px;
+    color:var(--ink);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .topbar-btn:hover{ background:var(--paper); }
+
+  .history-overlay{
+    position:fixed; inset:0;
+    background:rgba(24,26,32,0.4);
+    z-index:340;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .history-overlay.open{ opacity:1; pointer-events:auto; }
+  .history-drawer{
+    position:fixed; top:0; left:0; bottom:0;
+    width:300px; max-width:82vw;
+    background:var(--bg);
+    z-index:350;
+    padding:22px 20px;
+    box-shadow:20px 0 50px -20px rgba(0,0,0,0.3);
+    transform:translateX(-100%);
+    transition:transform .22s ease;
+    overflow-y:auto;
+    text-align:left;
+  }
+  .history-drawer.open{ transform:translateX(0); }
+  .history-drawer-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:16px;
+  }
+  .history-new-btn{
+    width:100%;
+    padding:12px 14px;
+    border-radius:10px;
+    border:1.5px dashed var(--flash-deep);
+    background:transparent;
+    color:var(--flash-deep);
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    margin-bottom:18px;
+  }
+  .history-new-btn:hover{ background:rgba(94,200,242,0.14); }
+  .history-list{
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .history-item{
+    display:flex;
+    gap:10px;
+    align-items:center;
+    padding:10px;
+    border-radius:10px;
+    border:1px solid transparent;
+    background:var(--paper);
+    cursor:pointer;
+    text-align:left;
+    width:100%;
+  }
+  .history-item:hover{ border-color:var(--line); }
+  .history-item.active-item{ border-color:var(--flash-deep); }
+  .history-item img, .history-item .history-item-icon{
+    width:36px; height:36px;
+    border-radius:7px;
+    object-fit:cover;
+    flex-shrink:0;
+    background:var(--paper-dim);
+    display:flex; align-items:center; justify-content:center;
+    font-size:16px;
+  }
+  .history-item-note{
+    font-size:12.5px;
+    font-weight:700;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .history-item-meta{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--muted-on-paper);
+    margin-top:2px;
+  }
+
+  .schedule-save-row{
+    width:100%;
+    text-align:left;
+    margin-bottom:14px;
+    padding-top:6px;
+    border-top:1px dashed var(--line);
+  }
+  .schedule-save-row .field-label{ margin-top:14px; }
+  .schedule-save-row .field-input{ margin-bottom:10px; }
+
+  .home-schedule{
+    position:fixed; inset:0;
+    background:var(--bg);
+    z-index:300;
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
+    padding:80px 24px 60px;
+    overflow-y:auto;
+  }
+  .home-schedule.active{ display:flex; }
+  .schedule-list{
+    display:flex; flex-direction:column; gap:12px;
+    text-align:left;
+  }
+  .schedule-card{
+    background:var(--paper);
+    border-radius:14px;
+    padding:16px;
+    display:flex;
+    gap:12px;
+    align-items:flex-start;
+    box-shadow:0 14px 30px -20px rgba(24,26,32,0.35);
+  }
+  .schedule-card img{
+    width:52px; height:52px;
+    border-radius:8px;
+    object-fit:cover;
+    flex-shrink:0;
+  }
+  .schedule-card-date{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--flash-deep);
+    font-weight:700;
+    margin-bottom:4px;
+  }
+  .schedule-card-note{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:13.5px;
+    color:var(--ink);
+    margin-bottom:4px;
+  }
+  .schedule-card-summary{
+    font-size:12px;
+    color:var(--muted-on-paper);
+    line-height:1.5;
+  }
+  .schedule-card-amount{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:13px;
+    color:var(--flash-deep);
+    margin-top:4px;
+  }
+  .schedule-card-del{
+    background:none; border:none;
+    color:var(--muted);
+    cursor:pointer;
+    font-size:13px;
+    flex-shrink:0;
+  }
+  .schedule-card-del:hover{ color:var(--coral); }
+  .schedule-empty{
+    font-size:13px;
+    color:var(--muted);
+    margin-top:20px;
+  }
+
+  .schedule-tabs{
+    display:flex;
+    gap:8px;
+    margin-bottom:20px;
+  }
+  .schedule-tab{
+    flex:1;
+    padding:11px 10px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:#FFFFFF;
+    color:var(--ink);
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:13px;
+    cursor:pointer;
+    transition:border-color .18s ease, background .18s ease, color .18s ease;
+  }
+  .schedule-tab.selected{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:var(--flash);
+  }
+  .schedule-panel{
+    text-align:left;
+    margin-bottom:22px;
+    padding-bottom:22px;
+    border-bottom:1px dashed var(--line);
+  }
+  .schedule-panel-hint{
+    font-size:13px;
+    color:var(--muted-on-paper);
+    line-height:1.6;
+    margin-bottom:14px;
+  }
+  .schedule-photo-preview{
+    margin-top:14px;
+  }
+  .schedule-photo-preview img{
+    width:100%;
+    max-height:220px;
+    object-fit:cover;
+    border-radius:12px;
+    margin-bottom:12px;
+    border:1.5px solid var(--line);
+  }
+  .schedule-extract-loading{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    padding:20px 0;
+    margin-bottom:22px;
+  }
+  .schedule-extract-loading .proc-text{ margin-top:12px; }
+  .schedule-section-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted-on-paper);
+    letter-spacing:.04em;
+    margin-bottom:12px;
+    text-align:left;
+  }
+  .budget-total{
+    background:var(--paper);
+    border-radius:14px;
+    padding:16px 18px;
+    margin-bottom:22px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    box-shadow:0 14px 30px -20px rgba(19,38,53,0.25);
+  }
+  .budget-total-label{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--muted-on-paper);
+  }
+  .budget-total-value{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:19px;
+    color:var(--flash-deep);
+  }
+
+  .calendar-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .calendar-nav-btn{
+    width:34px; height:34px;
+    border-radius:50%;
+    border:1.5px solid var(--line);
+    background:#FFFFFF;
+    color:var(--ink);
+    font-size:16px;
+    cursor:pointer;
+  }
+  .calendar-nav-btn:hover{ border-color:var(--flash-deep); }
+  .calendar-month-label{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:15px;
+    color:var(--ink);
+  }
+  .calendar-weekdays{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    text-align:center;
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted-on-paper);
+    margin-bottom:6px;
+  }
+  .calendar-grid{
+    display:grid;
+    grid-template-columns:repeat(7, 1fr);
+    gap:4px;
+    margin-bottom:8px;
+  }
+  .calendar-cell{
+    position:relative;
+    aspect-ratio:1;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    border-radius:10px;
+    background:#FFFFFF;
+    border:1.5px solid transparent;
+    font-size:13px;
+    color:var(--ink);
+    cursor:pointer;
+  }
+  .calendar-cell.empty{
+    background:transparent;
+    cursor:default;
+  }
+  .calendar-cell.today{
+    border-color:var(--line);
+    font-weight:700;
+  }
+  .calendar-cell.selected{
+    background:var(--ink);
+    color:var(--flash);
+  }
+  .calendar-cell .cal-dot{
+    position:absolute;
+    bottom:5px;
+    width:5px; height:5px;
+    border-radius:50%;
+    background:var(--flash-deep);
+  }
+  .calendar-cell.selected .cal-dot{ background:var(--flash); }
+
+  .quiz-block{
+    margin-bottom:26px;
+    text-align:left;
+  }
+  .quiz-label{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:13.5px;
+    color:var(--ink);
+    margin-bottom:10px;
+  }
+  .quiz-toggle-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:8px;
+  }
+  .quiz-toggle{
+    flex:1;
+    padding:11px 10px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:#FFFFFF;
+    color:var(--ink);
+    font-family:var(--font-body);
+    font-size:13px;
+    cursor:pointer;
+    transition:border-color .18s ease, background .18s ease, color .18s ease;
+  }
+  .quiz-toggle:hover{ border-color:var(--flash-deep); }
+  .quiz-toggle.selected{
+    background:var(--ink);
+    border-color:var(--ink);
+    color:var(--flash);
+  }
+  #styleOptions .job-row,
+  #toneOptions .job-row{
+    padding:14px 16px;
+  }
+
+  /* AI processing */
+  .home-processing{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+  }
+  .home-processing.active{ display:flex; }
+  .proc-spinner{
+    width:64px; height:64px;
+    border-radius:50%;
+    border:3px solid var(--line);
+    border-top-color:var(--flash-deep);
+    animation:spin-proc 0.9s linear infinite;
+  }
+  @keyframes spin-proc{ to{ transform:rotate(360deg); } }
+  .proc-text{
+    margin-top:22px;
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--muted);
+  }
+
+  /* Result card */
+  .home-result{
+    display:none;
+    flex-direction:column;
+    align-items:center;
+  }
+  .home-result.active{ display:flex; }
+  .result-card{
+    width:100%;
+    background:var(--paper);
+    border-radius:18px;
+    padding:22px;
+    margin:18px 0 22px;
+    box-shadow:0 20px 44px -22px rgba(24,26,32,0.35);
+    text-align:left;
+  }
+  .result-card-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--muted-on-paper);
+    letter-spacing:.04em;
+    margin-bottom:6px;
+  }
+  .result-card-note{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:15px;
+    color:var(--ink);
+    margin-bottom:16px;
+  }
+  .result-ai-text{
+    font-size:13.5px;
+    color:#3A3830;
+    line-height:1.7;
+    text-align:left;
+    overflow-wrap:anywhere;
+    min-width:0;
+  }
+  .result-ai-text p{ margin:0 0 10px; }
+  .result-ai-text p:last-child{ margin-bottom:0; }
+  .result-ai-text strong{ color:var(--ink); font-weight:800; }
+  .result-ai-text .md-heading{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:14.5px;
+    color:var(--ink);
+    margin-top:14px;
+  }
+  .result-ai-text ul, .result-ai-text ol{
+    margin:0 0 12px;
+    padding-left:20px;
+  }
+  .result-ai-text li{ margin-bottom:4px; }
+  .result-ai-text .md-table{
+    width:100%;
+    table-layout:fixed;
+    border-collapse:collapse;
+    margin:6px 0 14px;
+    font-size:12.5px;
+  }
+  .result-ai-text .md-table th,
+  .result-ai-text .md-table td{
+    border:1px solid var(--line);
+    padding:7px 9px;
+    text-align:left;
+    overflow-wrap:anywhere;
+  }
+  .result-ai-text .md-table th{
+    background:var(--paper-dim);
+    font-family:var(--font-display);
+    font-weight:700;
+  }
+  .result-thumb-wrap{
+    width:100%;
+    aspect-ratio:4/3;
+    border-radius:12px;
+    overflow:hidden;
+    background:var(--paper-dim);
+    margin-bottom:14px;
+  }
+  .result-thumb{ width:100%; height:100%; object-fit:cover; display:block; }
+  .result-hint{
+    font-size:12.5px;
+    color:var(--muted-on-paper);
+    line-height:1.6;
+  }
+  .copy-btn{
+    width:100%;
+    padding:13px 14px;
+    border-radius:10px;
+    border:1.5px solid var(--line);
+    background:#FFFFFF;
+    color:var(--ink);
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:13.5px;
+    margin-bottom:10px;
+    transition:border-color .18s ease;
+  }
+
+  .result-chat-area{
+    width:100%;
+    margin-top:6px;
+    text-align:left;
+  }
+  .result-chat-log{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    max-height:340px;
+    overflow-y:auto;
+    padding:4px 2px 14px;
+  }
+  .chat-bubble{
+    max-width:86%;
+    padding:11px 14px;
+    border-radius:14px;
+    font-size:13.5px;
+    line-height:1.6;
+  }
+  .chat-bubble.user{
+    align-self:flex-end;
+    background:var(--ink);
+    color:var(--flash);
+    border-bottom-right-radius:4px;
+  }
+  .chat-bubble.ai{
+    align-self:flex-start;
+    background:var(--paper);
+    color:var(--ink);
+    border-bottom-left-radius:4px;
+    box-shadow:0 10px 22px -16px rgba(19,38,53,0.3);
+  }
+  .chat-bubble.ai p{ margin:0 0 8px; }
+  .chat-bubble.ai p:last-child{ margin-bottom:0; }
+  .chat-bubble.loading{
+    color:var(--muted-on-paper);
+    font-family:var(--font-mono);
+    font-size:12px;
+  }
+  .result-chat-input-row{
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .result-chat-input-row .field-input{ margin-bottom:0; }
+  .chat-send-btn{
+    width:42px; height:42px;
+    flex-shrink:0;
+    border-radius:50%;
+    border:none;
+    background:var(--ink);
+    color:var(--flash);
+    font-size:16px;
+    cursor:pointer;
+  }
+  .chat-send-btn:hover{ opacity:0.88; }
+  .copy-btn:hover{ border-color:var(--flash-deep); }
+
+  /* ===== SECTION LABEL ===== */
+  .section{ padding:120px 0; }
+  .section-head{ text-align:center; margin-bottom:64px; }
+  .section-head h2{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:clamp(26px,4vw,40px);
+    letter-spacing:-0.02em;
+    margin-top:14px;
+  }
+  .section-head h2 em{
+    font-style:normal;
+    color:var(--flash-deep);
+  }
+  .section-head p{
+    margin-top:14px;
+    color:var(--muted);
+    font-size:15px;
+  }
+
+  /* ===== PAIN POINTS (polaroids) ===== */
+  .polaroids{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:36px;
+    max-width:860px;
+    margin:0 auto;
+  }
+  .polaroid{
+    background:var(--paper);
+    color:var(--ink);
+    padding:20px 20px 28px;
+    border-radius:2px;
+    box-shadow:0 24px 50px -20px rgba(0,0,0,0.6);
+  }
+  .polaroid.tilt-l{ transform:rotate(-2.4deg); }
+  .polaroid.tilt-r{ transform:rotate(2deg); }
+  .polaroid-photo{
+    aspect-ratio:4/3;
+    border-radius:1px;
+    display:flex; align-items:center; justify-content:center;
+    margin-bottom:16px;
+  }
+  .polaroid-photo.student{ background:linear-gradient(135deg, #D6EEFB, #B9E2F7); }
+  .polaroid-photo.office{ background:linear-gradient(135deg, #DFF5EB, #C9F3E1); }
+  .polaroid h3{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:19px;
+    margin-bottom:12px;
+  }
+  .polaroid ul{ list-style:none; }
+  .polaroid li{
+    font-size:14px;
+    line-height:1.7;
+    color:#4A4740;
+    padding-left:18px;
+    position:relative;
+  }
+  .polaroid li::before{
+    content:"✕";
+    position:absolute; left:0; top:0;
+    color:var(--coral);
+    font-size:11px;
+    font-weight:700;
+  }
+
+  /* ===== FEATURE CARDS ===== */
+  .card-row{
+    display:flex;
+    gap:20px;
+    overflow-x:auto;
+    padding:8px 4px 24px;
+    scroll-snap-type:x mandatory;
+  }
+  .card-row::-webkit-scrollbar{ height:6px; }
+  .card-row::-webkit-scrollbar-thumb{ background:var(--line); border-radius:10px; }
+  .fcard{
+    flex:0 0 300px;
+    scroll-snap-align:start;
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:20px;
+    padding:26px;
+    box-shadow:0 16px 34px -22px rgba(24,26,32,0.35);
+    transition:border-color .25s ease, transform .25s ease, box-shadow .25s ease;
+  }
+  .fcard.highlight{
+    border-color:var(--flash);
+    transform:translateY(-6px);
+  }
+  .fcard-tag{
+    display:inline-block;
+    font-family:var(--font-mono);
+    font-size:11px;
+    padding:4px 10px;
+    border-radius:100px;
+    margin-bottom:18px;
+    letter-spacing:.03em;
+  }
+  .fcard:nth-child(1) .fcard-tag{ background:rgba(94,200,242,0.22); color:var(--flash-deep); }
+  .fcard:nth-child(2) .fcard-tag{ background:rgba(57,185,138,0.14); color:var(--mint); }
+  .fcard:nth-child(3) .fcard-tag{ background:rgba(255,90,54,0.14); color:var(--coral); }
+  .fcard h4{
+    font-family:var(--font-display);
+    font-size:17px;
+    font-weight:800;
+    margin-bottom:10px;
+  }
+  .fcard .input-line{
+    font-family:var(--font-mono);
+    font-size:12px;
+    color:var(--muted);
+    border-left:2px solid var(--line);
+    padding-left:10px;
+    margin-bottom:16px;
+    line-height:1.6;
+  }
+  .fcard ul{ list-style:none; }
+  .fcard li{
+    font-size:13.5px;
+    color:#4C4A42;
+    line-height:1.8;
+    padding-left:16px;
+    position:relative;
+  }
+  .fcard li::before{
+    content:"→";
+    position:absolute; left:0; color:var(--muted);
+  }
+
+  /* ===== RECEIPT PRICING ===== */
+  .receipt{
+    max-width:400px;
+    margin:0 auto;
+    background:var(--paper);
+    color:var(--ink);
+    padding:36px 30px 28px;
+    font-family:var(--font-mono);
+    position:relative;
+    box-shadow:0 30px 60px -24px rgba(0,0,0,0.55);
+  }
+  .receipt::before, .receipt::after{
+    content:"";
+    position:absolute; left:0; right:0; height:10px;
+    background:
+      linear-gradient(-45deg, var(--ink) 6px, transparent 0) 0 0/12px 12px repeat-x,
+      linear-gradient(45deg, var(--ink) 6px, transparent 0) 0 0/12px 12px repeat-x;
+  }
+  .receipt::before{ top:-1px; }
+  .receipt::after{ bottom:-1px; transform:scaleY(-1); }
+  .receipt-head{ text-align:center; margin-bottom:22px; }
+  .receipt-head .r-logo{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:20px;
+  }
+  .receipt-head .r-sub{ font-size:11px; color:var(--muted-on-paper); margin-top:4px; }
+  .r-row{
+    display:flex; justify-content:space-between; align-items:baseline;
+    font-size:13px;
+    padding:10px 0;
+    border-bottom:1px dashed #CFCBBD;
+  }
+  .r-row:last-of-type{ border-bottom:none; }
+  .r-row .r-name{ font-weight:700; }
+  .r-row .r-desc{ display:block; font-size:11px; color:var(--muted-on-paper); margin-top:4px; font-family:var(--font-body); }
+  .r-row .r-price{ font-weight:700; white-space:nowrap; padding-left:12px; }
+  .r-total{
+    margin-top:20px;
+    padding-top:16px;
+    border-top:1.5px solid var(--ink);
+    display:flex; justify-content:space-between;
+    font-size:13px;
+  }
+
+  /* ===== CTA FOOTER ===== */
+  .cta-footer{
+    text-align:center;
+    padding:140px 0 90px;
+    background:linear-gradient(180deg, transparent, rgba(94,200,242,0.18));
+  }
+  .cta-footer h2{
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:clamp(26px,4.6vw,44px);
+    letter-spacing:-0.02em;
+  }
+  .mini-shutter{
+    width:64px; height:64px;
+    border-radius:50%;
+    background:var(--flash);
+    color:var(--ink);
+    display:flex; align-items:center; justify-content:center;
+    font-family:var(--font-display);
+    font-weight:900;
+    font-size:11px;
+    margin:36px auto 0;
+    cursor:pointer;
+    border:none;
+    transition:transform .18s ease;
+  }
+  .mini-shutter:hover{ transform:scale(1.08); }
+  footer{
+    padding:30px 0 40px;
+    border-top:1px solid var(--line);
+    text-align:center;
+    color:var(--muted);
+    font-family:var(--font-mono);
+    font-size:12px;
+  }
+
+  @media (max-width: 680px){
+    .polaroids{ grid-template-columns:1fr; }
+    .section{ padding:80px 0; }
+    .shutter-zone{ width:180px; height:180px; }
+    .shutter-core{ width:98px; height:98px; }
+  }
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; transition-duration:0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="flash-overlay" id="flashOverlay"></div>
+<div class="toast" id="toast">찰칵 — 상황을 분류하는 중...</div>
+
+<div class="modal-overlay" id="authOverlay">
+  <div class="modal-card">
+    <button type="button" class="modal-close" id="modalClose" aria-label="닫기">✕</button>
+
+    <!-- LOGIN -->
+    <div class="modal-panel active" id="panelLogin">
+      <div class="eyebrow">Log in</div>
+      <h3>이름으로 로그인</h3>
+      <p class="modal-sub">가입할 때 사용한 이름과 비밀번호로 로그인하세요.</p>
+      <label class="field-label" for="loginName">이름</label>
+      <input type="text" id="loginName" class="field-input" placeholder="가입할 때 쓴 닉네임" />
+      <label class="field-label" for="loginPassword">비밀번호</label>
+      <input type="password" autocomplete="current-password" id="loginPassword" class="field-input" placeholder="비밀번호" />
+      <div class="field-error" id="loginError"></div>
+      <button type="button" class="field-submit" id="loginSubmit">로그인</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNUP — dedicated full page, step 1: account -->
+<div class="fullpage" id="signupPage1">
+  <button type="button" class="modal-close page-close" id="signup1Close" aria-label="닫기">✕</button>
+  <div class="page-inner">
+    <div class="eyebrow">Sign up · 1/3</div>
+    <h1 class="page-title">이메일로 회원가입</h1>
+    <p class="sub">사진 한 장이면 끝나는 하루, 이메일로 바로 시작하세요.</p>
+    <div class="page-form">
+      <label class="field-label" for="signupNickname">닉네임</label>
+      <input type="text" id="signupNickname" class="field-input" placeholder="예: 귀찮은이" />
+      <label class="field-label" for="signupEmail">이메일</label>
+      <input type="text" inputmode="email" autocomplete="email" id="signupEmail" class="field-input" placeholder="you@example.com" />
+      <label class="field-label" for="signupPassword">비밀번호</label>
+      <input type="password" autocomplete="new-password" id="signupPassword" class="field-input" placeholder="8자 이상" />
+      <div class="field-error" id="signup1Error"></div>
+      <button type="button" class="field-submit" id="signup1Next">다음</button>
+    </div>
+  </div>
+</div>
+
+<!-- SIGNUP — dedicated full page, step 2: job (vertical list) -->
+<div class="fullpage" id="signupPage2">
+  <button type="button" class="page-back" id="signup2Back" aria-label="이전">← 이전</button>
+  <button type="button" class="modal-close page-close" id="signup2Close" aria-label="닫기">✕</button>
+  <div class="page-inner">
+    <div class="eyebrow">Sign up · 2/3</div>
+    <h1 class="page-title">어떤 일을 하고 계세요?</h1>
+    <p class="sub">귀찮음의 모양이 다르니까, 딱 맞는 카드로 시작할게요.</p>
+    <div class="job-list" id="jobOptions">
+      <button type="button" class="job-row" data-job="학생">
+        <span class="job-row-label">학생</span>
+        <span class="job-row-desc">교재 요약, 시험 기간 시간 관리가 필요해요</span>
+      </button>
+      <button type="button" class="job-row" data-job="직장인">
+        <span class="job-row-label">직장인</span>
+        <span class="job-row-desc">보고서 요약, 영수증·고지서 처리가 필요해요</span>
+      </button>
+      <button type="button" class="job-row" data-job="기타">
+        <span class="job-row-label">기타 (직접 작성)</span>
+        <span class="job-row-desc">해당하는 게 없다면 직접 알려주세요</span>
+      </button>
+    </div>
+    <input type="text" id="jobCustom" class="field-input job-custom-input" placeholder="하시는 일을 알려주세요" />
+    <div class="field-error" id="signup2Error"></div>
+    <button type="button" class="field-submit page-submit" id="signup2Done">다음</button>
+  </div>
+</div>
+
+<!-- SIGNUP — dedicated full page, step 3: 성향 분석 -->
+<div class="fullpage" id="signupPage3">
+  <button type="button" class="page-back" id="signup3Back" aria-label="이전">← 이전</button>
+  <button type="button" class="modal-close page-close" id="signup3Close" aria-label="닫기">✕</button>
+  <div class="page-inner">
+    <div class="eyebrow">Sign up · 3/3</div>
+    <h1 class="page-title">당신에게 맞는 방식으로</h1>
+    <p class="sub">몇 가지만 알려주시면, 같은 사진도 회원님 스타일에 맞게 정리해드려요.</p>
+
+    <div class="quiz-block">
+      <div class="quiz-label">MBTI (알고 계시면 골라주세요)</div>
+      <div class="quiz-toggle-row" data-axis="ei">
+        <button type="button" class="quiz-toggle" data-value="E">E · 외향</button>
+        <button type="button" class="quiz-toggle" data-value="I">I · 내향</button>
+      </div>
+      <div class="quiz-toggle-row" data-axis="sn">
+        <button type="button" class="quiz-toggle" data-value="S">S · 현실적</button>
+        <button type="button" class="quiz-toggle" data-value="N">N · 직관적</button>
+      </div>
+      <div class="quiz-toggle-row" data-axis="tf">
+        <button type="button" class="quiz-toggle" data-value="T">T · 논리적</button>
+        <button type="button" class="quiz-toggle" data-value="F">F · 감성적</button>
+      </div>
+      <div class="quiz-toggle-row" data-axis="jp">
+        <button type="button" class="quiz-toggle" data-value="J">J · 계획형</button>
+        <button type="button" class="quiz-toggle" data-value="P">P · 즉흥형</button>
+      </div>
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-label">결과는 어떤 스타일이 좋아요?</div>
+      <div class="job-list" id="styleOptions">
+        <button type="button" class="job-row" data-style="핵심만">
+          <span class="job-row-label">핵심만 딱딱</span>
+          <span class="job-row-desc">군더더기 없이 요점만 짧게</span>
+        </button>
+        <button type="button" class="job-row" data-style="꼼꼼하게">
+          <span class="job-row-label">꼼꼼하고 자세하게</span>
+          <span class="job-row-desc">배경 설명까지 풀어서</span>
+        </button>
+        <button type="button" class="job-row" data-style="표로">
+          <span class="job-row-label">표·리스트로 깔끔하게</span>
+          <span class="job-row-desc">구조화된 형태로 한눈에</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="quiz-block">
+      <div class="quiz-label">말투는요?</div>
+      <div class="job-list" id="toneOptions">
+        <button type="button" class="job-row" data-tone="친근한 반말">
+          <span class="job-row-label">친근하게 (반말)</span>
+          <span class="job-row-desc">편한 친구처럼</span>
+        </button>
+        <button type="button" class="job-row" data-tone="정중한 존댓말">
+          <span class="job-row-label">정중하게 (존댓말)</span>
+          <span class="job-row-desc">예의 바르게</span>
+        </button>
+        <button type="button" class="job-row" data-tone="간결한 사무체">
+          <span class="job-row-label">사무적으로</span>
+          <span class="job-row-desc">깔끔하고 건조하게</span>
+        </button>
+      </div>
+    </div>
+
+    <button type="button" class="preview-back" id="signup3Skip">건너뛰기</button>
+    <button type="button" class="field-submit page-submit" id="signup3Done">시작하기</button>
+  </div>
+</div>
+
+<div class="app-home" id="appHome">
+  <button type="button" class="modal-close home-close" id="homeClose" aria-label="닫기">✕</button>
+  <div class="home-topbar" id="homeTopbar">
+    <button type="button" class="topbar-btn" id="historyOpenBtn" aria-label="채팅 목록">☰ 채팅 목록</button>
+    <button type="button" class="topbar-btn" id="scheduleOpenBtn" aria-label="내 일정">📅 내 일정</button>
+  </div>
+
+  <div class="history-overlay" id="historyOverlay"></div>
+  <div class="history-drawer" id="historyDrawer">
+    <div class="history-drawer-head">
+      <span class="eyebrow">Chats</span>
+      <button type="button" class="modal-close" id="historyCloseBtn" aria-label="닫기">✕</button>
+    </div>
+    <button type="button" class="history-new-btn" id="historyNewBtn">+ 새로 만들기</button>
+    <div class="history-list" id="historyList"></div>
+    <p class="schedule-empty" id="historyEmpty">아직 분석한 대화가 없어요.</p>
+  </div>
+
+  <div class="home-capture" id="homeCapture">
+    <div class="eyebrow" id="homeGreetEyebrow">Welcome</div>
+    <div class="job-badge" id="jobBadge" style="display:none;"></div>
+
+    <h1 class="home-greet" id="homeGreet">안녕하세요.</h1>
+    <p class="sub" id="homeSub">오늘의 귀찮음을 사진 한 장으로 끝내보세요.</p>
+    <div class="shutter-zone" style="margin-top:48px;">
+      <div class="shutter-outline"></div>
+      <button class="shutter" id="homeShutterBtn" aria-label="click">
+        <div class="blade-ring">
+          <span class="blade" style="--i:0"></span>
+          <span class="blade" style="--i:1"></span>
+          <span class="blade" style="--i:2"></span>
+          <span class="blade" style="--i:3"></span>
+          <span class="blade" style="--i:4"></span>
+          <span class="blade" style="--i:5"></span>
+          <span class="blade" style="--i:6"></span>
+          <span class="blade" style="--i:7"></span>
+        </div>
+        <span class="shutter-core"></span>
+      </button>
+    </div>
+    <div class="shutter-caption">눌러서 사진이나 PDF를 선택하세요</div>
+  </div>
+
+  <input type="file" id="photoInput" accept="image/*,application/pdf" style="display:none" />
+
+  <div class="home-preview" id="homePreview">
+    <div class="eyebrow" id="previewEyebrow">1 photo · 1 line</div>
+    <h1 class="page-title">어떤 상황이에요?</h1>
+    <div class="preview-thumb-wrap" id="previewThumbWrap">
+      <img id="previewThumb" class="preview-thumb" alt="선택한 사진" />
+    </div>
+    <div class="preview-pdf-box" id="previewPdfBox" style="display:none;">
+      <div class="preview-pdf-icon">📄</div>
+      <div class="preview-pdf-name" id="previewPdfName">file.pdf</div>
+    </div>
+    <div class="suggest-chips" id="suggestChips"></div>
+    <label class="field-label" for="photoNote">한 줄 설명</label>
+    <input type="text" id="photoNote" class="field-input" placeholder="예: 내일 시험이니까 핵심만 요약해줘" />
+    <button type="button" class="field-submit" id="photoSend">보내기</button>
+    <button type="button" class="preview-back" id="previewBack">← 다른 파일 선택</button>
+  </div>
+
+  <div class="home-processing" id="homeProcessing">
+    <div class="proc-spinner"></div>
+    <p class="proc-text" id="procText">AI가 사진을 분석하고 있어요…</p>
+  </div>
+
+  <div class="home-result" id="homeResult">
+    <div class="eyebrow" id="resultTag">정리 중</div>
+    <h1 class="page-title">AI가 정리했어요</h1>
+    <div class="result-card">
+      <div class="result-card-inner-row">
+        <div class="result-thumb-wrap" id="resultThumbWrap"><img id="resultThumb" class="result-thumb" alt="보낸 사진" /></div>
+        <div class="result-card-text">
+          <div class="result-card-label">보낸 요청</div>
+          <p class="result-card-note" id="resultNote"></p>
+          <div class="result-card-label" style="margin-top:14px;">AI 정리 결과</div>
+          <div class="result-ai-text" id="resultAiText">분석 중…</div>
+        </div>
+      </div>
+    </div>
+    <button type="button" class="preview-back copy-btn" id="resultCopy">결과 복사하기</button>
+    <button type="button" class="preview-back copy-btn" id="resultChatBtn">💬 대화 이어서 하기</button>
+    <button type="button" class="field-submit" id="resultDone">확인했어요</button>
+
+    <div class="result-chat-area" id="resultChatArea" style="display:none;">
+      <div class="result-chat-log" id="resultChatLog"></div>
+      <div class="result-chat-input-row">
+        <input type="text" id="resultChatInput" class="field-input" placeholder="이어서 물어보세요…" />
+        <button type="button" class="chat-send-btn" id="resultChatSend" aria-label="보내기">➤</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="home-schedule" id="homeSchedule">
+    <button type="button" class="page-back" id="scheduleBack" aria-label="이전">← 홈으로</button>
+    <div class="page-inner" style="max-width:480px;">
+      <div class="eyebrow" id="scheduleEyebrow">My Schedule</div>
+      <h1 class="page-title" id="scheduleTitle">내 일정</h1>
+      <p class="sub" id="scheduleSub" style="margin-bottom:24px;">직접 입력하거나, 사진을 올려서 한 번에 추가하세요.</p>
+
+      <div class="schedule-tabs">
+        <button type="button" class="schedule-tab selected" id="tabManual" data-tab="manual">✏️ 직접 입력</button>
+        <button type="button" class="schedule-tab" id="tabPhoto" data-tab="photo">📷 사진 업로드</button>
+      </div>
+
+      <div class="schedule-panel" id="schedulePanelManual">
+        <label class="field-label" for="manualDate">날짜</label>
+        <input type="date" id="manualDate" class="field-input" />
+        <label class="field-label" for="manualTitle" id="manualTitleLabel">일정 내용</label>
+        <input type="text" id="manualTitle" class="field-input" placeholder="예: 중간고사 - 수학" />
+        <label class="field-label" for="manualAmount" id="manualAmountLabel" style="display:none;">금액 (선택)</label>
+        <input type="number" id="manualAmount" class="field-input" placeholder="예: 45000" style="display:none;" />
+        <div class="field-error" id="manualError"></div>
+        <button type="button" class="field-submit" id="manualAddBtn">일정 추가</button>
+      </div>
+
+      <div class="schedule-panel" id="schedulePanelPhoto" style="display:none;">
+        <p class="schedule-panel-hint" id="schedulePhotoHint">시험 일정표나 시간표 사진을 올리면, AI가 날짜와 과목을 읽어서 한 번에 일정에 추가해줘요.</p>
+        <input type="file" id="scheduleFileInput" accept="image/*,application/pdf" style="display:none" />
+        <button type="button" class="field-submit" id="schedulePhotoPickBtn">📷 시험 일정표 사진 선택</button>
+        <div class="schedule-photo-preview" id="schedulePhotoPreview" style="display:none;">
+          <img id="schedulePhotoThumb" alt="선택한 일정표" />
+          <button type="button" class="field-submit" id="scheduleExtractBtn">AI로 일정 추출하기</button>
+        </div>
+        <div class="field-error" id="scheduleExtractError"></div>
+      </div>
+
+      <div class="schedule-extract-loading" id="scheduleExtractLoading" style="display:none;">
+        <div class="proc-spinner" style="width:36px;height:36px;"></div>
+        <p class="proc-text">사진에서 일정을 읽고 있어요…</p>
+      </div>
+
+      <div class="budget-total" id="budgetTotal" style="display:none;"></div>
+
+      <div class="schedule-section-label">캘린더</div>
+      <div class="calendar-header">
+        <button type="button" class="calendar-nav-btn" id="calPrevBtn" aria-label="이전 달">‹</button>
+        <div class="calendar-month-label" id="calMonthLabel">2026년 7월</div>
+        <button type="button" class="calendar-nav-btn" id="calNextBtn" aria-label="다음 달">›</button>
+      </div>
+      <div class="calendar-weekdays">
+        <span>일</span><span>월</span><span>화</span><span>수</span><span>목</span><span>금</span><span>토</span>
+      </div>
+      <div class="calendar-grid" id="calendarGrid"></div>
+
+      <div class="schedule-section-label" style="margin-top:24px;" id="dayDetailLabel">오늘 일정</div>
+      <div id="scheduleList" class="schedule-list"></div>
+      <p class="schedule-empty" id="scheduleEmpty">이 날짜에는 일정이 없어요.</p>
+    </div>
+  </div>
+</div>
+
+<nav>
+  <div class="wrap">
+    <div class="logo">click<span class="dot">.</span></div>
+    <div class="nav-actions">
+      <button type="button" class="nav-link" id="loginBtn">로그인</button>
+      <button type="button" class="nav-cta" id="signupBtn">이메일로 회원가입</button>
+    </div>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="eyebrow hero-tag">사진 한 장 + 한 줄이면 끝</div>
+  <h1>귀찮을 땐,<br>그냥 <em>click</em> 하세요.</h1>
+  <p class="sub">교재든 영수증이든 고지서든, 찍고 한 줄만 적으면 AI가 상황을 판단해서 요약하고 정리하고 등록합니다.</p>
+
+  <div class="shutter-zone">
+    <div class="shutter-outline"></div>
+    <button class="shutter" id="shutterBtn" aria-label="click 눌러서 데모 보기">
+      <div class="blade-ring">
+        <span class="blade" style="--i:0"></span>
+        <span class="blade" style="--i:1"></span>
+        <span class="blade" style="--i:2"></span>
+        <span class="blade" style="--i:3"></span>
+        <span class="blade" style="--i:4"></span>
+        <span class="blade" style="--i:5"></span>
+        <span class="blade" style="--i:6"></span>
+        <span class="blade" style="--i:7"></span>
+      </div>
+      <span class="shutter-core"></span>
+    </button>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Pain point</div>
+      <h2>우리가 매일 미루는 것들</h2>
+      <p>귀찮음의 모양은 다르지만, 해결 방식은 똑같습니다 — 찍고, click.</p>
+    </div>
+    <div class="polaroids">
+      <div class="polaroid tilt-l">
+        <div class="polaroid-photo student">
+          <svg viewBox="0 0 200 150" width="78%" aria-hidden="true">
+            <rect x="28" y="30" width="144" height="98" rx="4" fill="#FFFFFF" stroke="#2A2718" stroke-width="2.5"/>
+            <line x1="100" y1="30" x2="100" y2="128" stroke="#2A2718" stroke-width="2.5"/>
+            <path d="M28 30 Q100 20 172 30" fill="none" stroke="#2A2718" stroke-width="2.5"/>
+            <rect x="40" y="50" width="48" height="10" fill="#5EC8F2" opacity="0.85" transform="rotate(-2 64 55)"/>
+            <rect x="40" y="68" width="52" height="10" fill="#5EC8F2" opacity="0.85" transform="rotate(-1.5 66 73)"/>
+            <line x1="40" y1="46" x2="94" y2="46" stroke="#B9B49C" stroke-width="2"/>
+            <line x1="40" y1="64" x2="94" y2="64" stroke="#B9B49C" stroke-width="2"/>
+            <line x1="40" y1="82" x2="80" y2="82" stroke="#B9B49C" stroke-width="2"/>
+            <line x1="112" y1="46" x2="160" y2="46" stroke="#B9B49C" stroke-width="2"/>
+            <line x1="112" y1="60" x2="160" y2="60" stroke="#B9B49C" stroke-width="2"/>
+            <rect x="112" y="74" width="40" height="10" fill="#5EC8F2" opacity="0.85" transform="rotate(2 132 79)"/>
+            <line x1="112" y1="92" x2="150" y2="92" stroke="#B9B49C" stroke-width="2"/>
+            <g transform="rotate(38 150 112)">
+              <rect x="146" y="90" width="12" height="46" rx="4" fill="#39B98A" stroke="#2A2718" stroke-width="2"/>
+              <rect x="146" y="90" width="12" height="12" rx="3" fill="#2A2718"/>
+            </g>
+          </svg>
+        </div>
+        <h3>학생</h3>
+        <ul>
+          <li>방대한 교재, 어디부터 요약해야 할지 막막함</li>
+          <li>시험 기간, 손도 못 대는 시간 관리</li>
+          <li>과제는 내일의 나에게 미루는 습관</li>
+        </ul>
+      </div>
+      <div class="polaroid tilt-r">
+        <div class="polaroid-photo office">
+          <svg viewBox="0 0 200 150" width="70%" aria-hidden="true">
+            <g transform="rotate(-4 100 78)">
+              <polygon points="58,26 142,26 142,118 132,112 122,120 112,112 102,120 92,112 82,120 72,112 62,120 58,112" fill="#FFFFFF" stroke="#2A2718" stroke-width="2.5" stroke-linejoin="round"/>
+              <line x1="72" y1="42" x2="128" y2="42" stroke="#B9B49C" stroke-width="2"/>
+              <line x1="72" y1="54" x2="118" y2="54" stroke="#B9B49C" stroke-width="2"/>
+              <line x1="72" y1="66" x2="128" y2="66" stroke="#B9B49C" stroke-width="2"/>
+              <line x1="72" y1="78" x2="110" y2="78" stroke="#B9B49C" stroke-width="2"/>
+              <line x1="72" y1="94" x2="128" y2="94" stroke="#2A2718" stroke-width="2.5"/>
+              <text x="72" y="106" font-family="monospace" font-size="13" fill="#FF5A36" font-weight="700">₩12,900</text>
+            </g>
+            <path d="M50 60 Q40 78 52 96" fill="none" stroke="#2A2718" stroke-width="1.6" opacity="0.35"/>
+            <path d="M150 50 Q160 70 148 92" fill="none" stroke="#2A2718" stroke-width="1.6" opacity="0.35"/>
+          </svg>
+        </div>
+        <h3>직장인</h3>
+        <ul>
+          <li>매일 쏟아지는 보고서, 요약할 시간이 없음</li>
+          <li>영수증·고지서는 찍어두고 방치</li>
+          <li>메신저 알림에 쫓기는 하루</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="features">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Chameleon AI</div>
+      <h2>당신만의 <em>맞춤형 AI 비서</em></h2>
+      <p>학생인지 직장인인지, 상황에 맞춰 알아서 역할을 바꿔요. 학업 / 소비 / 일정 — 딱 맞는 카드가 도착해요.</p>
+    </div>
+    <div class="card-row">
+      <div class="fcard" id="cardStudy">
+        <span class="fcard-tag">학업 · 요약</span>
+        <h4>족집게 교재 요약</h4>
+        <div class="input-line">"내일 시험이니까 핵심만 요약해줘"</div>
+        <ul>
+          <li>가독성 높은 3줄 요약 카드</li>
+          <li>족집게 용어 해설</li>
+          <li>예상 기출문제 자동 출제</li>
+        </ul>
+      </div>
+      <div class="fcard">
+        <span class="fcard-tag">소비 · 가계부</span>
+        <h4>찍기만 하면 가계부</h4>
+        <div class="input-line">영수증 사진 한 장</div>
+        <ul>
+          <li>마이데이터 연동 자동 가계부 반영</li>
+          <li>납부 마감일 리마인드 알림</li>
+          <li>결제 링크 자동 연동</li>
+        </ul>
+      </div>
+      <div class="fcard">
+        <span class="fcard-tag">일정 · 기타</span>
+        <h4>알아서 캘린더에</h4>
+        <div class="input-line">고지서 사진 한 장</div>
+        <ul>
+          <li>마감일·금액 자동 인식</li>
+          <li>구글 캘린더 자동 등록</li>
+          <li>알림 분석 기반 리마인드 발송</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="pricing">
+  <div class="wrap">
+    <div class="section-head">
+      <div class="eyebrow">Business model</div>
+      <h2>요금제</h2>
+      <p>귀찮음을 없애는 데 드는 비용, 영수증처럼 투명하게.</p>
+    </div>
+    <div class="receipt">
+      <div class="receipt-head">
+        <div class="r-logo">click</div>
+        <div class="r-sub">RECEIPT NO. 0001 · 매일 자정 리셋</div>
+      </div>
+      <div class="r-row">
+        <div>
+          <div class="r-name">기본 팩</div>
+          <span class="r-desc">하루 사진 분석 3회</span>
+        </div>
+        <div class="r-price">FREE</div>
+      </div>
+      <div class="r-row">
+        <div>
+          <div class="r-name">프리미엄 구독</div>
+          <span class="r-desc">무제한 분석 · PDF 다운로드 · AI 오답노트</span>
+        </div>
+        <div class="r-price">₩2,900~</div>
+      </div>
+      <div class="r-row">
+        <div>
+          <div class="r-name">B2B 제휴</div>
+          <span class="r-desc">자취용품·밀키트·스터디카페 매칭</span>
+        </div>
+        <div class="r-price">수수료</div>
+      </div>
+      <div class="r-total">
+        <span>TOTAL EFFORT</span>
+        <span>0원 · 0분</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="cta-footer">
+  <div class="wrap">
+    <div class="eyebrow">Just click</div>
+    <h2>지금, 그냥 click 하세요.</h2>
+    <button class="mini-shutter" id="miniShutter">CLICK</button>
+  </div>
+</section>
+
+<footer>
+  click — 귀찮을 땐, 그냥 click 하세요. · Powered by Claude API
+</footer>
+
+<script>
+  const flashOverlay = document.getElementById('flashOverlay');
+  const toast = document.getElementById('toast');
+  const highlightCard = document.getElementById('cardStudy');
+
+  function triggerShutter(){
+    const shutter = document.getElementById('shutterBtn');
+    shutter.classList.add('closed');
+    flashOverlay.classList.remove('flashing');
+    void flashOverlay.offsetWidth;
+    flashOverlay.classList.add('flashing');
+
+    setTimeout(()=>{ shutter.classList.remove('closed'); }, 420);
+
+    toast.classList.add('show');
+    setTimeout(()=>{ toast.classList.remove('show'); }, 1600);
+
+    document.getElementById('features').scrollIntoView({behavior:'smooth', block:'start'});
+    setTimeout(()=>{
+      highlightCard.classList.add('highlight');
+      setTimeout(()=> highlightCard.classList.remove('highlight'), 2000);
+    }, 500);
+  }
+
+  document.getElementById('shutterBtn').addEventListener('click', triggerShutter);
+  document.getElementById('miniShutter').addEventListener('click', triggerShutter);
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const authOverlay = document.getElementById('authOverlay');
+  const signupPage1 = document.getElementById('signupPage1');
+  const signupPage2 = document.getElementById('signupPage2');
+  let selectedJob = '';
+  let pendingUser = { nickname:'', email:'' };
+  let registeredUsers = [];
+  let userStore = {};
+
+  function openLogin(){
+    document.getElementById('loginError').textContent = '';
+    authOverlay.classList.add('open');
+    setTimeout(()=> document.getElementById('loginName').focus(), 200);
+  }
+  function closeAuth(){
+    authOverlay.classList.remove('open');
+  }
+
+  function openSignupStep1(){
+    signupPage2.classList.remove('active');
+    signupPage1.classList.add('active');
+    document.getElementById('signup1Error').textContent = '';
+    window.scrollTo({top:0});
+    setTimeout(()=> document.getElementById('signupNickname').focus(), 150);
+  }
+  function openSignupStep2(){
+    signupPage1.classList.remove('active');
+    signupPage2.classList.add('active');
+    document.getElementById('signup2Error').textContent = '';
+    window.scrollTo({top:0});
+  }
+  function closeSignup(){
+    signupPage1.classList.remove('active');
+    signupPage2.classList.remove('active');
+    signupPage3.classList.remove('active');
+  }
+
+  document.getElementById('loginBtn').addEventListener('click', openLogin);
+  document.getElementById('signupBtn').addEventListener('click', openSignupStep1);
+  document.getElementById('modalClose').addEventListener('click', closeAuth);
+  authOverlay.addEventListener('click', (e)=>{ if(e.target === authOverlay) closeAuth(); });
+  document.getElementById('signup1Close').addEventListener('click', closeSignup);
+  document.getElementById('signup2Close').addEventListener('click', closeSignup);
+  document.getElementById('signup2Back').addEventListener('click', openSignupStep1);
+  document.addEventListener('keydown', (e)=>{ if(e.key === 'Escape'){ closeAuth(); closeSignup(); closeHome(); } });
+
+  /* ---- LOGIN ---- */
+  document.getElementById('loginSubmit').addEventListener('click', ()=>{
+    const name = document.getElementById('loginName').value.trim();
+    const pw = document.getElementById('loginPassword').value;
+    const err = document.getElementById('loginError');
+    if(!name){ err.textContent = '이름을 입력해주세요'; return; }
+    if(!pw){ err.textContent = '비밀번호를 입력해주세요'; return; }
+
+    const match = registeredUsers.find(u => u.nickname === name);
+
+    if(!match){
+      err.textContent = '가입되지 않은 계정이에요. 회원가입 페이지로 이동할게요.';
+      setTimeout(()=>{
+        closeAuth();
+        document.getElementById('loginName').value = '';
+        document.getElementById('loginPassword').value = '';
+        err.textContent = '';
+        openSignupStep1();
+      }, 1200);
+      return;
+    }
+
+    if(match.password !== pw){
+      err.textContent = '비밀번호가 일치하지 않아요';
+      return;
+    }
+
+    err.textContent = '';
+    closeAuth();
+    enterHome(match.nickname, match.job, true);
+  });
+
+  /* ---- SIGNUP STEP 1 ---- */
+  document.getElementById('signup1Next').addEventListener('click', ()=>{
+    const nickname = document.getElementById('signupNickname').value.trim();
+    const email = document.getElementById('signupEmail').value.trim();
+    const pw = document.getElementById('signupPassword').value;
+    const err = document.getElementById('signup1Error');
+    if(!nickname){ err.textContent = '닉네임을 입력해주세요'; return; }
+    if(!EMAIL_RE.test(email)){ err.textContent = '올바른 이메일 주소를 입력해주세요'; return; }
+    if(pw.length < 4){ err.textContent = '비밀번호는 4자 이상 입력해주세요'; return; }
+    if(registeredUsers.some(u => u.nickname === nickname)){ err.textContent = '이미 사용 중인 이름이에요. 로그인해주세요.'; return; }
+    err.textContent = '';
+    pendingUser = { nickname, email, password: pw };
+    openSignupStep2();
+  });
+
+  /* ---- SIGNUP STEP 2: job ---- */
+  const jobCustomInput = document.getElementById('jobCustom');
+  document.querySelectorAll('#jobOptions .job-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      document.querySelectorAll('#jobOptions .job-row').forEach(r=>r.classList.remove('selected'));
+      row.classList.add('selected');
+      selectedJob = row.dataset.job;
+      if(selectedJob === '기타'){
+        jobCustomInput.classList.add('show');
+        setTimeout(()=> jobCustomInput.focus(), 100);
+      } else {
+        jobCustomInput.classList.remove('show');
+        jobCustomInput.value = '';
+      }
+    });
+  });
+
+  document.getElementById('signup2Done').addEventListener('click', ()=>{
+    const err = document.getElementById('signup2Error');
+    if(!selectedJob){ err.textContent = '하나를 선택해주세요'; return; }
+    let jobLabel = selectedJob;
+    if(selectedJob === '기타'){
+      const custom = jobCustomInput.value.trim();
+      if(!custom){ err.textContent = '하시는 일을 적어주세요'; return; }
+      jobLabel = custom;
+    }
+    err.textContent = '';
+    pendingUser.job = jobLabel;
+    openSignupStep3();
+  });
+
+  /* ---- SIGNUP STEP 3: 성향 분석 (MBTI + 스타일 + 톤) ---- */
+  const signupPage3 = document.getElementById('signupPage3');
+  let userPrefs = { mbti: {}, style: '', tone: '' };
+
+  function openSignupStep3(){
+    signupPage2.classList.remove('active');
+    signupPage3.classList.add('active');
+    window.scrollTo({top:0});
+  }
+
+  document.querySelectorAll('.quiz-toggle-row').forEach(row=>{
+    const axis = row.dataset.axis;
+    row.querySelectorAll('.quiz-toggle').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        row.querySelectorAll('.quiz-toggle').forEach(b=>b.classList.remove('selected'));
+        btn.classList.add('selected');
+        userPrefs.mbti[axis] = btn.dataset.value;
+      });
+    });
+  });
+
+  document.querySelectorAll('#styleOptions .job-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      document.querySelectorAll('#styleOptions .job-row').forEach(r=>r.classList.remove('selected'));
+      row.classList.add('selected');
+      userPrefs.style = row.dataset.style;
+    });
+  });
+
+  document.querySelectorAll('#toneOptions .job-row').forEach(row=>{
+    row.addEventListener('click', ()=>{
+      document.querySelectorAll('#toneOptions .job-row').forEach(r=>r.classList.remove('selected'));
+      row.classList.add('selected');
+      userPrefs.tone = row.dataset.tone;
+    });
+  });
+
+  document.getElementById('signup3Back').addEventListener('click', ()=>{
+    signupPage3.classList.remove('active');
+    signupPage2.classList.add('active');
+  });
+  document.getElementById('signup3Close').addEventListener('click', closeSignup);
+  function finishSignup(){
+    registeredUsers.push({
+      nickname: pendingUser.nickname,
+      email: pendingUser.email,
+      password: pendingUser.password,
+      job: pendingUser.job
+    });
+    closeSignup();
+    enterHome(pendingUser.nickname, pendingUser.job, false);
+  }
+  document.getElementById('signup3Skip').addEventListener('click', finishSignup);
+  document.getElementById('signup3Done').addEventListener('click', finishSignup);
+
+  /* ---- APP HOME ---- */
+  const appHome = document.getElementById('appHome');
+
+  let currentJob = '';
+
+  function jobMeta(job){
+    if(job === '학생'){
+      return {
+        icon: '📚',
+        label: '학생 모드',
+        suggestions: ['내일 시험이니까 핵심만 요약해줘', '헷갈리는 용어만 정리해줘', '예상 문제 만들어줘']
+      };
+    }
+    if(job === '직장인'){
+      return {
+        icon: '🧾',
+        label: '직장인 모드',
+        suggestions: ['이번 지출 정리해줘', '납부 기한 알려줘', '캘린더에 등록해줘']
+      };
+    }
+    if(job){
+      return { icon: '✨', label: `${job} 모드`, suggestions: ['핵심만 요약해줘'] };
+    }
+    return { icon: '✨', label: '', suggestions: ['핵심만 요약해줘'] };
+  }
+
+  function enterHome(nickname, jobLabel, isLogin){
+    currentJob = jobLabel;
+
+    if(!userStore[nickname]) userStore[nickname] = { chatHistory: [], scheduleItems: [] };
+    chatHistory = userStore[nickname].chatHistory;
+    scheduleItems = userStore[nickname].scheduleItems;
+
+    document.getElementById('homeGreetEyebrow').textContent = isLogin ? 'Welcome back' : 'Welcome';
+    document.getElementById('homeGreet').textContent = `안녕하세요, ${nickname}님.`;
+    document.getElementById('homeSub').textContent = jobLabel
+      ? `${jobLabel}님을 위한 카드로 시작할게요. 오늘의 귀찮음을 사진 한 장으로 끝내보세요.`
+      : '오늘의 귀찮음을 사진 한 장으로 끝내보세요.';
+
+    const meta = jobMeta(jobLabel);
+    const badge = document.getElementById('jobBadge');
+    if(meta.label){
+      badge.textContent = `${meta.icon} ${meta.label}`;
+      badge.style.display = 'inline-flex';
+    } else {
+      badge.style.display = 'none';
+    }
+
+    appHome.classList.add('active');
+  }
+
+  function closeHome(){
+    appHome.classList.remove('active');
+  }
+
+  document.getElementById('homeClose').addEventListener('click', ()=>{ closeHome(); resetCapture(); });
+
+  const photoInput = document.getElementById('photoInput');
+  const homeCapture = document.getElementById('homeCapture');
+  const homePreview = document.getElementById('homePreview');
+  const previewThumb = document.getElementById('previewThumb');
+  const photoNote = document.getElementById('photoNote');
+  const suggestChips = document.getElementById('suggestChips');
+
+  document.getElementById('homeShutterBtn').addEventListener('click', ()=>{
+    const shutter = document.getElementById('homeShutterBtn');
+    shutter.classList.add('closed');
+    setTimeout(()=>{ shutter.classList.remove('closed'); }, 420);
+    photoInput.click();
+  });
+
+  function isPdfFile(file){
+    return !!file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name || ''));
+  }
+
+  function setResultThumb(src){
+    const wrap = document.getElementById('resultThumbWrap');
+    if(src && src.startsWith('pdf::')){
+      const filename = src.slice(5);
+      wrap.innerHTML = `<div class="pdf-thumb-icon" title="${filename}">📄</div>`;
+    } else {
+      wrap.innerHTML = `<img id="resultThumb" class="result-thumb" alt="보낸 사진" src="${src || ''}" />`;
+    }
+  }
+
+  photoInput.addEventListener('change', async ()=>{
+    const file = photoInput.files && photoInput.files[0];
+    if(!file) return;
+    const base64 = await fileToBase64(file);
+    const previewThumbWrap = document.getElementById('previewThumbWrap');
+    const previewPdfBox = document.getElementById('previewPdfBox');
+
+    if(isPdfFile(file)){
+      previewThumbWrap.style.display = 'none';
+      previewPdfBox.style.display = 'flex';
+      document.getElementById('previewPdfName').textContent = file.name || 'file.pdf';
+      previewThumb.removeAttribute('src');
+    } else {
+      previewThumbWrap.style.display = 'block';
+      previewPdfBox.style.display = 'none';
+      previewThumb.src = `data:${file.type || 'image/jpeg'};base64,${base64}`;
+    }
+
+    flashOverlay.classList.remove('flashing');
+    void flashOverlay.offsetWidth;
+    flashOverlay.classList.add('flashing');
+    homeCapture.classList.add('hidden');
+    homePreview.classList.add('active');
+    homeTopbar.style.display = 'none';
+
+    const meta = jobMeta(currentJob);
+    suggestChips.innerHTML = '';
+    meta.suggestions.forEach(text=>{
+      const chip = document.createElement('button');
+      chip.type = 'button';
+      chip.className = 'suggest-chip';
+      chip.textContent = text;
+      chip.addEventListener('click', ()=>{
+        photoNote.value = text;
+        document.querySelectorAll('.suggest-chip').forEach(c=>c.classList.remove('picked'));
+        chip.classList.add('picked');
+        photoNote.focus();
+      });
+      suggestChips.appendChild(chip);
+    });
+
+    setTimeout(()=> photoNote.focus(), 250);
+  });
+
+  document.getElementById('previewBack').addEventListener('click', resetCapture);
+
+  const homeProcessing = document.getElementById('homeProcessing');
+  const homeResult = document.getElementById('homeResult');
+  let lastSummaryText = '';
+  let chatHistory = [];
+  let conversationMessages = [];
+  const resultChatArea = document.getElementById('resultChatArea');
+  const resultChatLog = document.getElementById('resultChatLog');
+  const resultChatInput = document.getElementById('resultChatInput');
+
+  function escapeHtml(s){
+    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function inlineMd(text){
+    return escapeHtml(text)
+      .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+      .replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em>$1</em>');
+  }
+
+  function mdToHtml(md){
+    const lines = (md || '').replace(/\r\n/g, '\n').split('\n');
+    let html = '';
+    let i = 0;
+    while(i < lines.length){
+      const line = lines[i];
+
+      if(/^\s*\|.*\|\s*$/.test(line) && lines[i+1] && /^\s*\|?[\s:|-]+\|[\s:|-]*\s*$/.test(lines[i+1])){
+        const splitRow = (row)=> row.split('|').map(s=>s.trim()).filter((s,idx,arr)=> !(idx===0 && s==='') && !(idx===arr.length-1 && s===''));
+        const headerCells = splitRow(line);
+        let table = '<table class="md-table"><thead><tr>' + headerCells.map(c=>`<th>${inlineMd(c)}</th>`).join('') + '</tr></thead><tbody>';
+        i += 2;
+        while(i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])){
+          const cells = splitRow(lines[i]);
+          table += '<tr>' + cells.map(c=>`<td>${inlineMd(c)}</td>`).join('') + '</tr>';
+          i++;
+        }
+        table += '</tbody></table>';
+        html += table;
+        continue;
+      }
+
+      if(/^\s*[-•]\s+/.test(line)){
+        let list = '<ul>';
+        while(i < lines.length && /^\s*[-•]\s+/.test(lines[i])){
+          list += `<li>${inlineMd(lines[i].replace(/^\s*[-•]\s+/, ''))}</li>`;
+          i++;
+        }
+        list += '</ul>';
+        html += list;
+        continue;
+      }
+
+      if(/^\s*\d+[\.\)]\s+/.test(line)){
+        let list = '<ol>';
+        while(i < lines.length && /^\s*\d+[\.\)]\s+/.test(lines[i])){
+          list += `<li>${inlineMd(lines[i].replace(/^\s*\d+[\.\)]\s+/, ''))}</li>`;
+          i++;
+        }
+        list += '</ol>';
+        html += list;
+        continue;
+      }
+
+      if(/^\s*#{1,3}\s+/.test(line)){
+        html += `<p class="md-heading">${inlineMd(line.replace(/^\s*#{1,3}\s+/, ''))}</p>`;
+        i++;
+        continue;
+      }
+
+      if(line.trim() === ''){ i++; continue; }
+
+      html += `<p>${inlineMd(line)}</p>`;
+      i++;
+    }
+    return html || '<p>결과가 없어요.</p>';
+  }
+
+  function fileToBase64(file){
+    return new Promise((resolve, reject)=>{
+      const reader = new FileReader();
+      reader.onload = ()=> resolve(reader.result.split(',')[1]);
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  }
+
+  function buildPrompt(job, note){
+    const base = note ? `유저의 요청: "${note}"` : '유저가 별도 설명을 남기지 않았어요.';
+    const priorityNote = note
+      ? `\n\n★ 중요: 유저의 요청이 구체적이면 그 요청을 최우선으로 따르세요. 예를 들어 "50문제 다 분석해줘"라고 했으면 정말 문항 하나하나를 빠짐없이 다 분석해야 합니다 — 절대 일부만 하고 요약하거나 축소하지 마세요. 다만 답변 길이에는 한도가 있으니, 항목 수가 많을수록(예: 수십 개) 항목 하나당 설명은 1~2문장으로 간결하게 유지해서 반드시 끝까지 전부 완료하는 것을 우선하세요. 중간에 끊기지 않는 게 자세함보다 중요합니다.`
+      : '';
+    let taskPart;
+    if(job === '학생'){
+      taskPart = `당신은 학생을 위한 학습 도우미 앱 "click"의 AI예요. 첨부된 자료를 보고, ${base}${priorityNote}\n\n유저가 별도 요청을 하지 않았다면, 아래 기본 형식을 따르세요:\n1) 핵심 3줄 요약\n2) 헷갈리기 쉬운 용어 1~2개 해설\n3) 예상 문제 1개`;
+    } else if(job === '직장인'){
+      taskPart = `당신은 직장인을 위한 정리 도우미 앱 "click"의 AI예요. 첨부된 영수증/고지서/문서를 보고, ${base}${priorityNote}\n\n답변의 맨 첫 줄에는 반드시 아래 형식으로 납부기한(또는 관련 날짜), 짧은 제목, 총액을 적어주세요 (이 줄은 시스템이 자동으로 가계부·캘린더에 등록하는 데 씁니다):\n일정: YYYY-MM-DD | 짧은 제목 | 숫자만된 총액(원 단위, 쉼표 없이)\n날짜를 찾을 수 없으면 "일정: 없음" 이라고만 적어주세요. 금액을 알 수 없으면 마지막 칸에 0을 적어주세요. 연도가 안 보이면 ${new Date().getFullYear()}년으로 가정하세요.\n\n그 다음 줄부터, 유저가 별도 요청을 하지 않았다면 아래 기본 형식을 따르세요:\n1) 항목/금액 정리\n2) 납부기한이나 특이사항 (있다면)\n3) 한 줄 처리 제안`;
+    } else {
+      taskPart = `당신은 귀찮은 일을 대신 정리해주는 앱 "click"의 AI예요. 첨부된 자료를 보고, ${base}${priorityNote}\n\n유저가 별도 요청을 하지 않았다면, 핵심을 3줄 이내로 정리해주세요.`;
+    }
+
+    const styleNote = {
+      '핵심만': '군더더기 없이 최대한 짧고 압축적으로 답하세요.',
+      '꼼꼼하게': '배경 설명과 이유까지 조금 더 풀어서 자세히 답하세요.',
+      '표로': '가능한 부분은 표나 리스트로 구조화해서 한눈에 보기 좋게 답하세요.'
+    }[userPrefs.style] || '';
+
+    const toneNote = {
+      '친근한 반말': '친한 친구에게 말하듯 편한 반말로 답하세요.',
+      '정중한 존댓말': '예의 바르고 정중한 존댓말로 답하세요.',
+      '간결한 사무체': '감정 표현 없이 사무적이고 건조한 문체로 답하세요.'
+    }[userPrefs.tone] || '';
+
+    const mbti = userPrefs.mbti || {};
+    const mbtiParts = [];
+    if(mbti.tf === 'T') mbtiParts.push('논리와 근거를 우선해서 설명하세요.');
+    if(mbti.tf === 'F') mbtiParts.push('공감되는 표현과 격려를 살짝 곁들이세요.');
+    if(mbti.sn === 'S') mbtiParts.push('추상적인 말보다 구체적이고 실용적인 표현을 쓰세요.');
+    if(mbti.sn === 'N') mbtiParts.push('전체 맥락이나 큰 그림을 함께 짚어주세요.');
+    if(mbti.jp === 'J') mbtiParts.push('할 일을 순서/단계로 명확히 정리하세요.');
+    if(mbti.jp === 'P') mbtiParts.push('너무 딱딱한 순서보다는 유연하게 제안하세요.');
+    const mbtiNote = mbtiParts.join(' ');
+
+    const personalization = [styleNote, toneNote, mbtiNote].filter(Boolean).join(' ');
+    const personalizationBlock = personalization
+      ? `\n\n[이 유저에게 맞춘 스타일 지침 — 반드시 반영] ${personalization}`
+      : '';
+
+    return taskPart + personalizationBlock;
+  }
+
+  document.getElementById('photoSend').addEventListener('click', async ()=>{
+    const file = photoInput.files && photoInput.files[0];
+    const note = photoNote.value.trim();
+    const filePdf = isPdfFile(file);
+    const thumbSrc = filePdf ? `pdf::${file ? file.name : 'file.pdf'}` : previewThumb.src;
+    const tag = currentJob === '학생' ? '학업 · 요약'
+      : currentJob === '직장인' ? '소비 · 일정'
+      : currentJob ? `${currentJob} · 맞춤 정리`
+      : '맞춤 정리';
+
+    homePreview.classList.remove('active');
+    homeProcessing.classList.add('active');
+    document.getElementById('procText').textContent = 'AI가 파일을 분석하고 있어요…';
+
+    document.getElementById('resultTag').textContent = tag;
+    document.getElementById('resultNote').textContent = note || '(설명 없음)';
+    setResultThumb(thumbSrc);
+    lastResultThumb = thumbSrc;
+
+    if(!file){
+      homeProcessing.classList.remove('active');
+      document.getElementById('resultAiText').textContent = '파일이 없어서 분석할 수 없어요.';
+      homeResult.classList.add('active');
+      return;
+    }
+
+    try{
+      const base64Data = await fileToBase64(file);
+      const mediaType = file.type || (filePdf ? 'application/pdf' : 'image/jpeg');
+      const promptText = buildPrompt(currentJob, note);
+      const fileBlock = filePdf
+        ? { type: 'document', source: { type: 'base64', media_type: 'application/pdf', data: base64Data } }
+        : { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } };
+
+      const response = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 16000,
+          messages: [{
+            role: 'user',
+            content: [
+              fileBlock,
+              { type: 'text', text: promptText }
+            ]
+          }]
+        })
+      });
+
+      if(!response.ok){ throw new Error('API 오류: ' + response.status); }
+
+      const data = await response.json();
+      let aiText = (data.content || [])
+        .filter(block => block.type === 'text')
+        .map(block => block.text)
+        .join('\n')
+        .trim();
+      const wasTruncated = data.stop_reason === 'max_tokens';
+
+      let autoAddedDate = null;
+      let autoAddedAmount = null;
+      if(currentJob === '직장인'){
+        const lines = aiText.split('\n');
+        const firstLine = (lines[0] || '').trim();
+        const m = firstLine.match(/^일정:\s*(\d{4}-\d{2}-\d{2})\s*\|\s*([^|]+?)\s*\|\s*([\d.]+)\s*$/);
+        if(m){
+          autoAddedDate = m[1];
+          const scheduleTitle = m[2].trim();
+          const parsedAmount = Number(m[3]);
+          autoAddedAmount = parsedAmount > 0 ? parsedAmount : null;
+          scheduleItems.push({
+            date: autoAddedDate,
+            note: scheduleTitle || note || '(설명 없음)',
+            summary: '영수증/고지서에서 자동 추가',
+            thumb: thumbSrc,
+            amount: autoAddedAmount
+          });
+          lines.shift();
+          aiText = lines.join('\n').replace(/^\n+/, '').trim();
+        } else if(/^일정:\s*없음\s*$/.test(firstLine)){
+          lines.shift();
+          aiText = lines.join('\n').replace(/^\n+/, '').trim();
+        }
+      }
+
+      lastSummaryText = aiText || '결과를 받지 못했어요.';
+      homeProcessing.classList.remove('active');
+      document.getElementById('resultAiText').innerHTML = mdToHtml(lastSummaryText);
+      homeResult.classList.add('active');
+
+      if(wasTruncated){
+        toast.textContent = '⚠️ 답변이 길이 제한으로 중간에 끊겼어요 — "대화 이어서 하기"로 나머지를 요청해보세요';
+        toast.classList.add('show');
+        setTimeout(()=>{ toast.classList.remove('show'); }, 3600);
+      } else if(autoAddedDate){
+        toast.textContent = `📅 ${autoAddedDate} 일정에 자동으로 추가했어요`;
+        toast.classList.add('show');
+        setTimeout(()=>{ toast.classList.remove('show'); }, 2600);
+      }
+
+      chatHistory.unshift({
+        tag, note: note || '(설명 없음)', aiText: lastSummaryText, thumb: thumbSrc,
+        time: new Date().toLocaleString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+      });
+
+      conversationMessages = [
+        { role:'user', content: [
+          { type:'image', source:{ type:'base64', media_type: mediaType, data: base64Data } },
+          { type:'text', text: promptText }
+        ]},
+        { role:'assistant', content: [{ type:'text', text: lastSummaryText }] }
+      ];
+      resultChatLog.innerHTML = '';
+      resultChatArea.style.display = 'none';
+    } catch(err){
+      homeProcessing.classList.remove('active');
+      lastSummaryText = '';
+      document.getElementById('resultAiText').textContent = '분석 중 오류가 발생했어요. 다시 시도해주세요. (' + err.message + ')';
+      homeResult.classList.add('active');
+    }
+  });
+
+  document.getElementById('resultCopy').addEventListener('click', ()=>{
+    const copyBtn = document.getElementById('resultCopy');
+    const finish = (ok)=>{
+      copyBtn.textContent = ok ? '복사됐어요 ✓' : '복사 실패, 직접 선택해주세요';
+      setTimeout(()=>{ copyBtn.textContent = '결과 복사하기'; }, 1800);
+    };
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(lastSummaryText).then(()=>finish(true)).catch(()=>finish(false));
+    } else {
+      finish(false);
+    }
+  });
+
+  document.getElementById('resultChatBtn').addEventListener('click', ()=>{
+    const isOpen = resultChatArea.style.display !== 'none';
+    resultChatArea.style.display = isOpen ? 'none' : 'block';
+    if(!isOpen){
+      setTimeout(()=> resultChatInput.focus(), 150);
+      resultChatLog.scrollTop = resultChatLog.scrollHeight;
+    }
+  });
+
+  function appendChatBubble(role, htmlOrText, isHtml){
+    const bubble = document.createElement('div');
+    bubble.className = 'chat-bubble ' + (role === 'user' ? 'user' : 'ai');
+    if(isHtml){ bubble.innerHTML = htmlOrText; } else { bubble.textContent = htmlOrText; }
+    resultChatLog.appendChild(bubble);
+    resultChatLog.scrollTop = resultChatLog.scrollHeight;
+    return bubble;
+  }
+
+  async function sendFollowUp(){
+    const text = resultChatInput.value.trim();
+    if(!text) return;
+    if(conversationMessages.length === 0){
+      appendChatBubble('ai', '먼저 사진을 분석한 뒤에 대화를 이어갈 수 있어요.', false);
+      return;
+    }
+    resultChatInput.value = '';
+    appendChatBubble('user', text, false);
+
+    const calendarInstruction = `\n\n[시스템 지침: 위 요청이 캘린더/일정/가계부에 무언가를 등록·저장해달라는 요청이면, 답변의 맨 첫 줄에 정확히 아래 형식으로 적어주세요 (이 줄은 화면에 표시되지 않고 시스템이 자동으로 캘린더에 등록하는 데 씁니다):\n일정: YYYY-MM-DD | 짧은 제목 | 금액(숫자만, 없으면 0)\n날짜를 알 수 없으면 오늘(${todayStr()})로 하세요. 캘린더 등록 요청이 아니면 이 줄 없이 평소처럼 답하세요.]`;
+
+    const outgoingMessages = [...conversationMessages, { role:'user', content:[{ type:'text', text: text + calendarInstruction }] }];
+    conversationMessages.push({ role:'user', content:[{ type:'text', text }] });
+
+    const loadingBubble = appendChatBubble('ai', '생각하는 중…', false);
+    loadingBubble.classList.add('loading');
+
+    try{
+      const response = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 4096,
+          messages: outgoingMessages
+        })
+      });
+      if(!response.ok){ throw new Error('API 오류: ' + response.status); }
+      const data = await response.json();
+      let replyText = (data.content || [])
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('\n')
+        .trim() || '답을 받지 못했어요.';
+
+      const lines = replyText.split('\n');
+      const firstLine = (lines[0] || '').trim();
+      const m = firstLine.match(/^일정:\s*(\d{4}-\d{2}-\d{2})\s*\|\s*([^|]+?)\s*\|\s*([\d.]+)\s*$/);
+      if(m){
+        const addedDate = m[1];
+        const addedTitle = m[2].trim();
+        const addedAmount = Number(m[3]);
+        scheduleItems.push({
+          date: addedDate,
+          note: addedTitle || '(대화에서 추가)',
+          summary: '대화에서 자동 추가',
+          thumb: lastResultThumb || '',
+          amount: addedAmount > 0 ? addedAmount : null
+        });
+        lines.shift();
+        replyText = lines.join('\n').replace(/^\n+/, '').trim();
+        toast.textContent = `📅 ${addedDate} 일정에 추가했어요`;
+        toast.classList.add('show');
+        setTimeout(()=>{ toast.classList.remove('show'); }, 2600);
+      }
+
+      conversationMessages.push({ role:'assistant', content:[{ type:'text', text: replyText }] });
+      loadingBubble.classList.remove('loading');
+      loadingBubble.innerHTML = mdToHtml(replyText);
+      resultChatLog.scrollTop = resultChatLog.scrollHeight;
+    } catch(err){
+      loadingBubble.classList.remove('loading');
+      loadingBubble.textContent = '오류가 발생했어요: ' + err.message;
+      conversationMessages.pop();
+    }
+  }
+
+  document.getElementById('resultChatSend').addEventListener('click', sendFollowUp);
+  resultChatInput.addEventListener('keydown', (e)=>{ if(e.key === 'Enter') sendFollowUp(); });
+
+  document.getElementById('resultDone').addEventListener('click', ()=>{
+    homeResult.classList.remove('active');
+    homeCapture.classList.remove('hidden');
+    resetCapture();
+    toast.textContent = '찰칵 — 오늘 하루도 click 완료';
+    toast.classList.add('show');
+    setTimeout(()=>{ toast.classList.remove('show'); }, 2800);
+  });
+
+  /* ---- In-app schedule (내 일정) ---- */
+  let scheduleItems = [];
+  let lastResultThumb = '';
+
+  const homeSchedule = document.getElementById('homeSchedule');
+  const scheduleOpenBtn = document.getElementById('scheduleOpenBtn');
+  const homeTopbar = document.getElementById('homeTopbar');
+  const scheduleList = document.getElementById('scheduleList');
+  const scheduleEmpty = document.getElementById('scheduleEmpty');
+
+  function todayStr(){
+    const d = new Date();
+    return d.toISOString().slice(0,10);
+  }
+
+  let calendarViewDate = new Date();
+  let selectedDate = todayStr();
+
+  function dateStr(y, m, d){
+    const mm = String(m+1).padStart(2,'0');
+    const dd = String(d).padStart(2,'0');
+    return `${y}-${mm}-${dd}`;
+  }
+
+  function renderCalendar(){
+    const y = calendarViewDate.getFullYear();
+    const m = calendarViewDate.getMonth();
+    document.getElementById('calMonthLabel').textContent = `${y}년 ${m+1}월`;
+
+    const firstWeekday = new Date(y, m, 1).getDay();
+    const daysInMonth = new Date(y, m+1, 0).getDate();
+    const grid = document.getElementById('calendarGrid');
+    grid.innerHTML = '';
+
+    const datesWithEvents = new Set(scheduleItems.map(it => it.date));
+
+    for(let i=0; i<firstWeekday; i++){
+      const empty = document.createElement('div');
+      empty.className = 'calendar-cell empty';
+      grid.appendChild(empty);
+    }
+    for(let day=1; day<=daysInMonth; day++){
+      const ds = dateStr(y, m, day);
+      const cell = document.createElement('div');
+      cell.className = 'calendar-cell';
+      if(ds === todayStr()) cell.classList.add('today');
+      if(ds === selectedDate) cell.classList.add('selected');
+      cell.textContent = day;
+      if(datesWithEvents.has(ds)){
+        const dot = document.createElement('span');
+        dot.className = 'cal-dot';
+        cell.appendChild(dot);
+      }
+      cell.addEventListener('click', ()=>{
+        selectedDate = ds;
+        manualDate.value = ds;
+        renderCalendar();
+        renderDayDetail();
+      });
+      grid.appendChild(cell);
+    }
+  }
+
+  function renderDayDetail(){
+    const [y, m, d] = selectedDate.split('-').map(Number);
+    document.getElementById('dayDetailLabel').textContent =
+      (selectedDate === todayStr() ? '오늘 (' : '') + `${m}월 ${d}일 일정` + (selectedDate === todayStr() ? ')' : '');
+
+    scheduleList.innerHTML = '';
+    const items = scheduleItems.filter(it => it.date === selectedDate);
+    if(items.length === 0){
+      scheduleEmpty.style.display = 'block';
+      return;
+    }
+    scheduleEmpty.style.display = 'none';
+    items.forEach((item)=>{
+      const realIdx = scheduleItems.indexOf(item);
+      const card = document.createElement('div');
+      card.className = 'schedule-card';
+      const thumbHtml = item.thumb && item.thumb.startsWith('pdf::')
+        ? `<div style="width:52px;height:52px;border-radius:8px;background:var(--paper-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📄</div>`
+        : item.thumb
+        ? `<img src="${item.thumb}" alt="" />`
+        : `<div style="width:52px;height:52px;border-radius:8px;background:var(--paper-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📝</div>`;
+      const amountHtml = (item.amount != null && item.amount !== '')
+        ? `<div class="schedule-card-amount">₩${Number(item.amount).toLocaleString('ko-KR')}</div>` : '';
+      card.innerHTML = `
+        ${thumbHtml}
+        <div style="flex:1;">
+          <div class="schedule-card-note">${item.note || '(설명 없음)'}</div>
+          <div class="schedule-card-summary">${item.summary || ''}</div>
+          ${amountHtml}
+        </div>
+        <button type="button" class="schedule-card-del" data-idx="${realIdx}" aria-label="삭제">✕</button>
+      `;
+      scheduleList.appendChild(card);
+    });
+    scheduleList.querySelectorAll('.schedule-card-del').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        scheduleItems.splice(Number(btn.dataset.idx), 1);
+        renderCalendar();
+        renderDayDetail();
+        renderBudgetTotal();
+      });
+    });
+  }
+
+  function renderBudgetTotal(){
+    const totalEl = document.getElementById('budgetTotal');
+    if(currentJob !== '직장인'){
+      totalEl.style.display = 'none';
+      return;
+    }
+    const y = calendarViewDate.getFullYear();
+    const m = calendarViewDate.getMonth();
+    const prefix = `${y}-${String(m+1).padStart(2,'0')}`;
+    const total = scheduleItems
+      .filter(it => it.date && it.date.startsWith(prefix) && it.amount != null && it.amount !== '')
+      .reduce((sum, it) => sum + Number(it.amount), 0);
+    totalEl.style.display = 'flex';
+    totalEl.innerHTML = `<span class="budget-total-label">${m+1}월 지출 합계</span><span class="budget-total-value">₩${total.toLocaleString('ko-KR')}</span>`;
+  }
+
+  function updateScheduleTheme(){
+    const eyebrow = document.getElementById('scheduleEyebrow');
+    const title = document.getElementById('scheduleTitle');
+    const sub = document.getElementById('scheduleSub');
+    const tabPhoto = document.getElementById('tabPhoto');
+    const photoHint = document.getElementById('schedulePhotoHint');
+    const photoPickBtn = document.getElementById('schedulePhotoPickBtn');
+    const manualTitleLabel = document.getElementById('manualTitleLabel');
+    const manualTitle = document.getElementById('manualTitle');
+    const manualAmountLabel = document.getElementById('manualAmountLabel');
+    const manualAmount = document.getElementById('manualAmount');
+
+    if(currentJob === '직장인'){
+      eyebrow.textContent = 'My Budget & Schedule';
+      title.textContent = '가계부 & 일정';
+      sub.textContent = '영수증·고지서를 올리면 금액과 납부일이 자동으로 가계부와 일정에 반영돼요.';
+      tabPhoto.textContent = '📷 영수증 업로드';
+      photoHint.textContent = '영수증이나 고지서 사진을 올리면, AI가 금액과 날짜를 읽어서 가계부·일정에 한 번에 반영해줘요.';
+      photoPickBtn.textContent = '📷 영수증/고지서 사진 선택';
+      manualTitleLabel.textContent = '내용';
+      manualTitle.placeholder = '예: 전기요금';
+      manualAmountLabel.style.display = 'block';
+      manualAmount.style.display = 'block';
+    } else if(currentJob === '학생'){
+      eyebrow.textContent = 'My Schedule';
+      title.textContent = '시험 일정';
+      sub.textContent = '직접 입력하거나, 시험 일정표 사진을 올려서 한 번에 추가하세요.';
+      tabPhoto.textContent = '📷 일정표 업로드';
+      photoHint.textContent = '시험 일정표나 시간표 사진을 올리면, AI가 날짜와 과목을 읽어서 한 번에 일정에 추가해줘요.';
+      photoPickBtn.textContent = '📷 시험 일정표 사진 선택';
+      manualTitleLabel.textContent = '일정 내용';
+      manualTitle.placeholder = '예: 중간고사 - 수학';
+      manualAmountLabel.style.display = 'none';
+      manualAmount.style.display = 'none';
+    } else {
+      eyebrow.textContent = 'My Schedule';
+      title.textContent = '내 일정';
+      sub.textContent = '직접 입력하거나, 사진을 올려서 한 번에 추가하세요.';
+      tabPhoto.textContent = '📷 사진 업로드';
+      photoHint.textContent = '사진을 올리면, AI가 날짜를 읽어서 한 번에 일정에 추가해줘요.';
+      photoPickBtn.textContent = '📷 사진 선택';
+      manualTitleLabel.textContent = '일정 내용';
+      manualTitle.placeholder = '예: 약속 - 병원';
+      manualAmountLabel.style.display = 'none';
+      manualAmount.style.display = 'none';
+    }
+  }
+
+  function renderSchedule(){
+    renderCalendar();
+    renderDayDetail();
+    renderBudgetTotal();
+  }
+
+  document.getElementById('calPrevBtn').addEventListener('click', ()=>{
+    calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth()-1, 1);
+    renderCalendar();
+    renderBudgetTotal();
+  });
+  document.getElementById('calNextBtn').addEventListener('click', ()=>{
+    calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth()+1, 1);
+    renderCalendar();
+    renderBudgetTotal();
+  });
+
+  scheduleOpenBtn.addEventListener('click', ()=>{
+    homeCapture.classList.add('hidden');
+    homePreview.classList.remove('active');
+    homeProcessing.classList.remove('active');
+    homeResult.classList.remove('active');
+    homeTopbar.style.display = 'none';
+    calendarViewDate = new Date();
+    selectedDate = todayStr();
+    updateScheduleTheme();
+    renderSchedule();
+    homeSchedule.classList.add('active');
+  });
+
+  document.getElementById('scheduleBack').addEventListener('click', ()=>{
+    homeSchedule.classList.remove('active');
+    homeCapture.classList.remove('hidden');
+    homeTopbar.style.display = 'flex';
+  });
+
+  /* -- tabs -- */
+  const tabManual = document.getElementById('tabManual');
+  const tabPhoto = document.getElementById('tabPhoto');
+  const panelManual = document.getElementById('schedulePanelManual');
+  const panelPhoto = document.getElementById('schedulePanelPhoto');
+
+  tabManual.addEventListener('click', ()=>{
+    tabManual.classList.add('selected');
+    tabPhoto.classList.remove('selected');
+    panelManual.style.display = 'block';
+    panelPhoto.style.display = 'none';
+  });
+  tabPhoto.addEventListener('click', ()=>{
+    tabPhoto.classList.add('selected');
+    tabManual.classList.remove('selected');
+    panelPhoto.style.display = 'block';
+    panelManual.style.display = 'none';
+  });
+
+  /* -- manual entry -- */
+  const manualDate = document.getElementById('manualDate');
+  manualDate.value = todayStr();
+
+  document.getElementById('manualAddBtn').addEventListener('click', ()=>{
+    const date = manualDate.value;
+    const title = document.getElementById('manualTitle').value.trim();
+    const amountRaw = document.getElementById('manualAmount').value;
+    const amount = amountRaw !== '' ? Number(amountRaw) : null;
+    const err = document.getElementById('manualError');
+    if(!date){ err.textContent = '날짜를 선택해주세요'; return; }
+    if(!title){ err.textContent = '일정 내용을 입력해주세요'; return; }
+    err.textContent = '';
+    scheduleItems.push({ date, note: title, summary: '직접 입력', thumb: '', amount });
+    document.getElementById('manualTitle').value = '';
+    document.getElementById('manualAmount').value = '';
+    renderSchedule();
+  });
+
+  /* -- photo-based exam schedule extraction -- */
+  const scheduleFileInput = document.getElementById('scheduleFileInput');
+  const schedulePhotoPreview = document.getElementById('schedulePhotoPreview');
+  const schedulePhotoThumb = document.getElementById('schedulePhotoThumb');
+  let scheduleFileDataUrl = '';
+
+  document.getElementById('schedulePhotoPickBtn').addEventListener('click', ()=> scheduleFileInput.click());
+
+  scheduleFileInput.addEventListener('change', async ()=>{
+    const file = scheduleFileInput.files && scheduleFileInput.files[0];
+    if(!file) return;
+    const base64 = await fileToBase64(file);
+    scheduleFileDataUrl = `data:${file.type || 'image/jpeg'};base64,${base64}`;
+    schedulePhotoThumb.src = scheduleFileDataUrl;
+    schedulePhotoPreview.style.display = 'block';
+  });
+
+  document.getElementById('scheduleExtractBtn').addEventListener('click', async ()=>{
+    const file = scheduleFileInput.files && scheduleFileInput.files[0];
+    const err = document.getElementById('scheduleExtractError');
+    if(!file){ err.textContent = '사진을 먼저 선택해주세요'; return; }
+    err.textContent = '';
+
+    panelPhoto.style.display = 'none';
+    document.getElementById('scheduleExtractLoading').style.display = 'flex';
+
+    try{
+      const base64Data = await fileToBase64(file);
+      const mediaType = file.type || 'image/jpeg';
+      const year = new Date().getFullYear();
+      const promptText = `이 사진은 시험 일정표 또는 시간표예요. 사진에서 확인되는 모든 일정을 아래 형식으로만, 한 줄에 하나씩 출력하세요. 다른 설명, 인사말, 제목 없이 목록만 출력하세요.\n형식: YYYY-MM-DD | 과목명 또는 일정명\n연도가 사진에 안 보이면 ${year}년으로 가정하세요. 요일만 있고 정확한 날짜가 없으면 알 수 있는 범위에서 추정하세요.`;
+
+      const response = await fetch('/api/claude', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model: 'claude-sonnet-4-6',
+          max_tokens: 2048,
+          messages: [{
+            role: 'user',
+            content: [
+              { type: 'image', source: { type: 'base64', media_type: mediaType, data: base64Data } },
+              { type: 'text', text: promptText }
+            ]
+          }]
+        })
+      });
+
+      if(!response.ok){ throw new Error('API 오류: ' + response.status); }
+      const data = await response.json();
+      const text = (data.content || [])
+        .filter(b => b.type === 'text')
+        .map(b => b.text)
+        .join('\n')
+        .trim();
+
+      const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
+      const re = /^(\d{4}-\d{2}-\d{2})\s*\|\s*(.+)$/;
+      let addedCount = 0;
+      lines.forEach(line=>{
+        const m = line.match(re);
+        if(m){
+          scheduleItems.push({
+            date: m[1],
+            note: m[2],
+            summary: '사진에서 자동 추출',
+            thumb: scheduleFileDataUrl
+          });
+          addedCount++;
+        }
+      });
+
+      document.getElementById('scheduleExtractLoading').style.display = 'none';
+      panelPhoto.style.display = 'block';
+      schedulePhotoPreview.style.display = 'none';
+      scheduleFileInput.value = '';
+
+      if(addedCount === 0){
+        err.textContent = '일정을 읽어내지 못했어요. 더 선명한 사진으로 다시 시도해주세요.';
+      } else {
+        toast.textContent = `일정 ${addedCount}개를 추가했어요`;
+        toast.classList.add('show');
+        setTimeout(()=>{ toast.classList.remove('show'); }, 2200);
+      }
+      renderSchedule();
+    } catch(e){
+      document.getElementById('scheduleExtractLoading').style.display = 'none';
+      panelPhoto.style.display = 'block';
+      err.textContent = '분석 중 오류가 발생했어요: ' + e.message;
+    }
+  });
+
+  /* ---- Chat history drawer ---- */
+  const historyOverlay = document.getElementById('historyOverlay');
+  const historyDrawer = document.getElementById('historyDrawer');
+  const historyList = document.getElementById('historyList');
+  const historyEmpty = document.getElementById('historyEmpty');
+
+  function renderHistory(){
+    historyList.innerHTML = '';
+    if(chatHistory.length === 0){
+      historyEmpty.style.display = 'block';
+      return;
+    }
+    historyEmpty.style.display = 'none';
+    chatHistory.forEach((item, idx)=>{
+      const el = document.createElement('button');
+      el.type = 'button';
+      el.className = 'history-item';
+      const thumbHtml = item.thumb && item.thumb.startsWith('pdf::')
+        ? `<div class="history-item-icon">📄</div>`
+        : item.thumb
+        ? `<img src="${item.thumb}" alt="" />`
+        : `<div class="history-item-icon">💬</div>`;
+      el.innerHTML = `
+        ${thumbHtml}
+        <div style="flex:1; min-width:0;">
+          <div class="history-item-note">${item.note}</div>
+          <div class="history-item-meta">${item.tag} · ${item.time}</div>
+        </div>
+      `;
+      el.addEventListener('click', ()=> openHistoryItem(idx));
+      historyList.appendChild(el);
+    });
+  }
+
+  function openHistoryItem(idx){
+    const item = chatHistory[idx];
+    if(!item) return;
+    homeCapture.classList.add('hidden');
+    homePreview.classList.remove('active');
+    homeProcessing.classList.remove('active');
+    homeSchedule.classList.remove('active');
+    homeTopbar.style.display = 'none';
+
+    document.getElementById('resultTag').textContent = item.tag;
+    document.getElementById('resultNote').textContent = item.note;
+    setResultThumb(item.thumb);
+    document.getElementById('resultAiText').innerHTML = mdToHtml(item.aiText);
+    lastSummaryText = item.aiText;
+    homeResult.classList.add('active');
+    closeHistoryDrawer();
+
+    resultChatLog.innerHTML = '';
+    resultChatArea.style.display = 'none';
+    const dataUrlMatch = (item.thumb || '').match(/^data:([^;]+);base64,(.+)$/);
+    if(dataUrlMatch){
+      conversationMessages = [
+        { role:'user', content: [
+          { type:'image', source:{ type:'base64', media_type: dataUrlMatch[1], data: dataUrlMatch[2] } },
+          { type:'text', text: `(이전 요청: ${item.note})` }
+        ]},
+        { role:'assistant', content: [{ type:'text', text: item.aiText }] }
+      ];
+    } else {
+      conversationMessages = [];
+    }
+  }
+
+  function openHistoryDrawer(){
+    renderHistory();
+    historyOverlay.classList.add('open');
+    historyDrawer.classList.add('open');
+  }
+  function closeHistoryDrawer(){
+    historyOverlay.classList.remove('open');
+    historyDrawer.classList.remove('open');
+  }
+
+  document.getElementById('historyOpenBtn').addEventListener('click', openHistoryDrawer);
+  document.getElementById('historyCloseBtn').addEventListener('click', closeHistoryDrawer);
+  historyOverlay.addEventListener('click', closeHistoryDrawer);
+  document.getElementById('historyNewBtn').addEventListener('click', ()=>{
+    closeHistoryDrawer();
+    homeResult.classList.remove('active');
+    homeCapture.classList.remove('hidden');
+    homeTopbar.style.display = 'flex';
+    resetCapture();
+  });
+
+  function resetCapture(){
+    homePreview.classList.remove('active');
+    homeProcessing.classList.remove('active');
+    homeResult.classList.remove('active');
+    homeSchedule.classList.remove('active');
+    homeCapture.classList.remove('hidden');
+    homeTopbar.style.display = 'flex';
+    photoInput.value = '';
+    photoNote.value = '';
+    suggestChips.innerHTML = '';
+    conversationMessages = [];
+    resultChatLog.innerHTML = '';
+    resultChatArea.style.display = 'none';
+    document.getElementById('previewThumbWrap').style.display = 'block';
+    document.getElementById('previewPdfBox').style.display = 'none';
+    previewThumb.removeAttribute('src');
+  }
+</script>
+
+
+</body>
+</html>
