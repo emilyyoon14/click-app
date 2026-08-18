@@ -1553,10 +1553,10 @@
         <span class="shutter-core"></span>
       </button>
     </div>
-    <div class="shutter-caption">눌러서 사진이나 PDF를 선택하세요</div>
+    <div class="shutter-caption">눌러서 사진·PDF·녹음 파일을 선택하세요</div>
   </div>
 
-  <input type="file" id="photoInput" accept="image/*,application/pdf" style="display:none" />
+  <input type="file" id="photoInput" accept="image/*,application/pdf,audio/*" style="display:none" />
 
   <div class="home-preview" id="homePreview">
     <div class="eyebrow" id="previewEyebrow">1 photo · 1 line</div>
@@ -1567,6 +1567,10 @@
     <div class="preview-pdf-box" id="previewPdfBox" style="display:none;">
       <div class="preview-pdf-icon">📄</div>
       <div class="preview-pdf-name" id="previewPdfName">file.pdf</div>
+    </div>
+    <div class="preview-pdf-box" id="previewAudioBox" style="display:none;">
+      <div class="preview-pdf-icon">🎙️</div>
+      <div class="preview-pdf-name" id="previewAudioName">recording.m4a</div>
     </div>
     <div class="suggest-chips" id="suggestChips"></div>
     <label class="field-label" for="photoNote">한 줄 설명</label>
@@ -2143,11 +2147,18 @@
     return !!file && (file.type === 'application/pdf' || /\.pdf$/i.test(file.name || ''));
   }
 
+  function isAudioFile(file){
+    return !!file && (file.type.startsWith('audio/') || /\.(mp3|m4a|wav|aac|ogg|webm)$/i.test(file.name || ''));
+  }
+
   function setResultThumb(src){
     const wrap = document.getElementById('resultThumbWrap');
     if(src && src.startsWith('pdf::')){
       const filename = src.slice(5);
       wrap.innerHTML = `<div class="pdf-thumb-icon" title="${filename}">📄</div>`;
+    } else if(src && src.startsWith('audio::')){
+      const filename = src.slice(7);
+      wrap.innerHTML = `<div class="pdf-thumb-icon" title="${filename}">🎙️</div>`;
     } else {
       wrap.innerHTML = `<img id="resultThumb" class="result-thumb" alt="보낸 사진" src="${src || ''}" />`;
     }
@@ -2159,15 +2170,24 @@
     const base64 = await fileToBase64(file);
     const previewThumbWrap = document.getElementById('previewThumbWrap');
     const previewPdfBox = document.getElementById('previewPdfBox');
+    const previewAudioBox = document.getElementById('previewAudioBox');
 
     if(isPdfFile(file)){
       previewThumbWrap.style.display = 'none';
       previewPdfBox.style.display = 'flex';
+      previewAudioBox.style.display = 'none';
       document.getElementById('previewPdfName').textContent = file.name || 'file.pdf';
+      previewThumb.removeAttribute('src');
+    } else if(isAudioFile(file)){
+      previewThumbWrap.style.display = 'none';
+      previewPdfBox.style.display = 'none';
+      previewAudioBox.style.display = 'flex';
+      document.getElementById('previewAudioName').textContent = file.name || '녹음 파일';
       previewThumb.removeAttribute('src');
     } else {
       previewThumbWrap.style.display = 'block';
       previewPdfBox.style.display = 'none';
+      previewAudioBox.style.display = 'none';
       previewThumb.src = `data:${file.type || 'image/jpeg'};base64,${base64}`;
     }
 
@@ -2335,7 +2355,10 @@
     const file = photoInput.files && photoInput.files[0];
     const note = photoNote.value.trim();
     const filePdf = isPdfFile(file);
-    const thumbSrc = filePdf ? `pdf::${file ? file.name : 'file.pdf'}` : previewThumb.src;
+    const fileAudio = isAudioFile(file);
+    const thumbSrc = filePdf ? `pdf::${file ? file.name : 'file.pdf'}`
+      : fileAudio ? `audio::${file ? file.name : '녹음 파일'}`
+      : previewThumb.src;
     const tag = currentJob === '학생' ? '학업 · 요약'
       : currentJob === '직장인' ? '소비 · 일정'
       : currentJob ? `${currentJob} · 맞춤 정리`
@@ -2343,7 +2366,7 @@
 
     homePreview.classList.remove('active');
     homeProcessing.classList.add('active');
-    document.getElementById('procText').textContent = 'AI가 파일을 분석하고 있어요…';
+    document.getElementById('procText').textContent = fileAudio ? 'AI가 녹음을 듣고 있어요…' : 'AI가 파일을 분석하고 있어요…';
 
     document.getElementById('resultTag').textContent = tag;
     document.getElementById('resultNote').textContent = note || '(설명 없음)';
@@ -2360,7 +2383,7 @@
 
     try{
       const base64Data = await fileToBase64(file);
-      const mediaType = file.type || (filePdf ? 'application/pdf' : 'image/jpeg');
+      const mediaType = file.type || (filePdf ? 'application/pdf' : fileAudio ? 'audio/mpeg' : 'image/jpeg');
       const promptText = buildPrompt(currentJob, note);
       const filePart = { inline_data: { mime_type: mediaType, data: base64Data } };
 
@@ -2662,6 +2685,8 @@
       card.className = 'schedule-card';
       const thumbHtml = item.thumb && item.thumb.startsWith('pdf::')
         ? `<div style="width:52px;height:52px;border-radius:8px;background:var(--paper-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📄</div>`
+        : item.thumb && item.thumb.startsWith('audio::')
+        ? `<div style="width:52px;height:52px;border-radius:8px;background:var(--paper-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">🎙️</div>`
         : item.thumb
         ? `<img src="${item.thumb}" alt="" />`
         : `<div style="width:52px;height:52px;border-radius:8px;background:var(--paper-dim);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;">📝</div>`;
@@ -2964,6 +2989,8 @@
       el.className = 'history-item';
       const thumbHtml = item.thumb && item.thumb.startsWith('pdf::')
         ? `<div class="history-item-icon">📄</div>`
+        : item.thumb && item.thumb.startsWith('audio::')
+        ? `<div class="history-item-icon">🎙️</div>`
         : item.thumb
         ? `<img src="${item.thumb}" alt="" />`
         : `<div class="history-item-icon">💬</div>`;
@@ -3051,6 +3078,7 @@
     resultChatArea.style.display = 'none';
     document.getElementById('previewThumbWrap').style.display = 'block';
     document.getElementById('previewPdfBox').style.display = 'none';
+    document.getElementById('previewAudioBox').style.display = 'none';
     previewThumb.removeAttribute('src');
   }
 </script>
