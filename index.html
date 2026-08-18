@@ -427,7 +427,6 @@
     width:100%; max-width:min(760px, 94vw);
   }
   @media (min-width: 860px){
-    .app-home{ justify-content:center; }
     .home-capture, .home-preview, .home-result, .home-schedule{ max-width:min(900px, 94vw); }
     .result-card{ text-align:left; }
     .result-card-inner-row{
@@ -833,6 +832,28 @@
     font-size:19px;
     color:var(--flash-deep);
   }
+
+  .topic-insight{
+    background:var(--ink);
+    border-radius:14px;
+    padding:16px 18px;
+    margin-bottom:22px;
+    text-align:left;
+  }
+  .topic-insight-label{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--flash);
+    margin-bottom:8px;
+  }
+  .topic-insight-text{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:13.5px;
+    color:#FFFFFF;
+    line-height:1.6;
+  }
+  .topic-insight-text b{ color:var(--flash); }
 
   .calendar-header{
     display:flex;
@@ -1626,6 +1647,7 @@
       </div>
 
       <div class="budget-total" id="budgetTotal" style="display:none;"></div>
+      <div class="topic-insight" id="topicInsight" style="display:none;"></div>
 
       <div class="schedule-section-label">캘린더</div>
       <div class="calendar-header">
@@ -2071,9 +2093,10 @@
   function enterHome(nickname, jobLabel, isLogin){
     currentJob = jobLabel;
 
-    if(!userStore[nickname]) userStore[nickname] = { chatHistory: [], scheduleItems: [] };
+    if(!userStore[nickname]) userStore[nickname] = { chatHistory: [], scheduleItems: [], topicHistory: [] };
     chatHistory = userStore[nickname].chatHistory;
     scheduleItems = userStore[nickname].scheduleItems;
+    topicHistory = userStore[nickname].topicHistory;
 
     document.getElementById('homeGreetEyebrow').textContent = isLogin ? 'Welcome back' : 'Welcome';
     document.getElementById('homeGreet').textContent = `안녕하세요, ${nickname}님.`;
@@ -2181,6 +2204,7 @@
   const homeResult = document.getElementById('homeResult');
   let lastSummaryText = '';
   let chatHistory = [];
+  let topicHistory = [];
   let conversationMessages = [];
   const resultChatArea = document.getElementById('resultChatArea');
   const resultChatLog = document.getElementById('resultChatLog');
@@ -2270,7 +2294,7 @@
       : '';
     let taskPart;
     if(job === '학생'){
-      taskPart = `당신은 학생을 위한 학습 도우미 앱 "click"의 AI예요. 첨부된 자료를 보고, ${base}${priorityNote}\n\n유저가 별도 요청을 하지 않았다면, 아래 기본 형식을 따르세요:\n1) 핵심 3줄 요약\n2) 헷갈리기 쉬운 용어 1~2개 해설\n3) 예상 문제 1개`;
+      taskPart = `당신은 학생을 위한 학습 도우미 앱 "click"의 AI예요. 첨부된 자료를 보고, ${base}${priorityNote}\n\n답변의 맨 첫 줄에는 반드시 아래 형식으로 이 자료의 핵심 개념/단원을 짧게 적어주세요 (이 줄은 시스템이 자동으로 "자주 막히는 주제"를 추적하는 데 씁니다, 화면엔 이 줄만 따로 안 보여요):\n주제: 2~4단어로 된 핵심 개념명\n\n그 다음 줄부터, 유저가 별도 요청을 하지 않았다면 아래 기본 형식을 따르세요:\n1) 핵심 3줄 요약\n2) 헷갈리기 쉬운 용어 1~2개 해설\n3) 예상 문제 1개\n4) 다음에 뭘 더 보면 좋을지 한 줄 제안 (단순 요약이 아니라, "다음엔 ~을 더 연습해보세요" 같은 방향 제시로)`;
     } else if(job === '직장인'){
       taskPart = `당신은 직장인을 위한 정리 도우미 앱 "click"의 AI예요. 첨부된 영수증/고지서/문서를 보고, ${base}${priorityNote}\n\n답변의 맨 첫 줄에는 반드시 아래 형식으로 납부기한(또는 관련 날짜), 짧은 제목, 총액을 적어주세요 (이 줄은 시스템이 자동으로 가계부·캘린더에 등록하는 데 씁니다):\n일정: YYYY-MM-DD | 짧은 제목 | 숫자만된 총액(원 단위, 쉼표 없이)\n날짜를 찾을 수 없으면 "일정: 없음" 이라고만 적어주세요. 금액을 알 수 없으면 마지막 칸에 0을 적어주세요. 연도가 안 보이면 ${new Date().getFullYear()}년으로 가정하세요.\n\n그 다음 줄부터, 유저가 별도 요청을 하지 않았다면 아래 기본 형식을 따르세요:\n1) 항목/금액 정리\n2) 납부기한이나 특이사항 (있다면)\n3) 한 줄 처리 제안`;
     } else {
@@ -2369,6 +2393,7 @@
 
       let autoAddedDate = null;
       let autoAddedAmount = null;
+      let detectedTopic = null;
       if(currentJob === '직장인'){
         const lines = aiText.split('\n');
         const firstLine = (lines[0] || '').trim();
@@ -2388,6 +2413,16 @@
           lines.shift();
           aiText = lines.join('\n').replace(/^\n+/, '').trim();
         } else if(/^일정:\s*없음\s*$/.test(firstLine)){
+          lines.shift();
+          aiText = lines.join('\n').replace(/^\n+/, '').trim();
+        }
+      } else if(currentJob === '학생'){
+        const lines = aiText.split('\n');
+        const firstLine = (lines[0] || '').trim();
+        const m = firstLine.match(/^주제:\s*(.+)$/);
+        if(m){
+          detectedTopic = m[1].trim();
+          topicHistory.push({ topic: detectedTopic, date: todayStr() });
           lines.shift();
           aiText = lines.join('\n').replace(/^\n+/, '').trim();
         }
@@ -2649,6 +2684,7 @@
         renderCalendar();
         renderDayDetail();
         renderBudgetTotal();
+    renderTopicInsight();
       });
     });
   }
@@ -2667,6 +2703,26 @@
       .reduce((sum, it) => sum + Number(it.amount), 0);
     totalEl.style.display = 'flex';
     totalEl.innerHTML = `<span class="budget-total-label">${m+1}월 지출 합계</span><span class="budget-total-value">₩${total.toLocaleString('ko-KR')}</span>`;
+  }
+
+  function renderTopicInsight(){
+    const box = document.getElementById('topicInsight');
+    if(currentJob !== '학생' || topicHistory.length === 0){
+      box.style.display = 'none';
+      return;
+    }
+    const counts = {};
+    topicHistory.forEach(t => { counts[t.topic] = (counts[t.topic] || 0) + 1; });
+    const sorted = Object.entries(counts).sort((a,b)=> b[1]-a[1]);
+    const top = sorted[0];
+
+    box.style.display = 'block';
+    if(top[1] >= 2){
+      box.innerHTML = `<div class="topic-insight-label">📌 click이 알아챈 것</div><div class="topic-insight-text">최근 <b>"${top[0]}"</b>에서 ${top[1]}번 막히셨어요. 오늘은 여기부터 다시 짚어볼까요?</div>`;
+    } else {
+      const list = sorted.slice(0,3).map(([t])=>t).join(', ');
+      box.innerHTML = `<div class="topic-insight-label">📌 지금까지 본 주제</div><div class="topic-insight-text">${list}</div>`;
+    }
   }
 
   function updateScheduleTheme(){
@@ -2721,17 +2777,20 @@
     renderCalendar();
     renderDayDetail();
     renderBudgetTotal();
+    renderTopicInsight();
   }
 
   document.getElementById('calPrevBtn').addEventListener('click', ()=>{
     calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth()-1, 1);
     renderCalendar();
     renderBudgetTotal();
+    renderTopicInsight();
   });
   document.getElementById('calNextBtn').addEventListener('click', ()=>{
     calendarViewDate = new Date(calendarViewDate.getFullYear(), calendarViewDate.getMonth()+1, 1);
     renderCalendar();
     renderBudgetTotal();
+    renderTopicInsight();
   });
 
   scheduleOpenBtn.addEventListener('click', ()=>{
