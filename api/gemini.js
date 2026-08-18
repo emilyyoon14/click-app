@@ -15,7 +15,7 @@ export const config = {
 
 // 무료 티어(Flash 계열)만 사용하도록 기본값을 고정해뒀어요.
 // 나중에 Google이 모델을 바꾸면(가끔 있는 일이에요), 이 줄 하나만 바꾸면 돼요.
-const DEFAULT_MODEL = 'gemini-2.5-flash';
+const DEFAULT_MODEL = 'gemini-3.6-flash';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
