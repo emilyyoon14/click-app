@@ -8,6 +8,7 @@
 <link rel="manifest" href="/manifest.json" />
 <link rel="apple-touch-icon" href="/icon-192.png" />
 <meta name="theme-color" content="#132635" />
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -315,6 +316,28 @@
     transition:opacity .18s ease;
   }
   .field-submit:hover{ opacity:0.88; }
+
+  .google-btn-wrap{
+    display:flex;
+    justify-content:center;
+    margin-bottom:18px;
+    min-height:44px;
+  }
+  .or-divider{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:18px;
+    color:var(--muted-on-paper);
+    font-family:var(--font-mono);
+    font-size:11px;
+  }
+  .or-divider::before, .or-divider::after{
+    content:"";
+    flex:1;
+    height:1px;
+    background:var(--line);
+  }
 
   .modal-panel{ display:none; }
   .modal-panel.active{ display:block; }
@@ -1439,6 +1462,8 @@
       <div class="eyebrow">Log in</div>
       <h3>이름으로 로그인</h3>
       <p class="modal-sub">가입할 때 사용한 이름과 비밀번호로 로그인하세요.</p>
+      <div class="google-btn-wrap" id="googleBtnLogin"></div>
+      <div class="or-divider"><span>또는</span></div>
       <label class="field-label" for="loginName">이름</label>
       <input type="text" id="loginName" class="field-input" placeholder="가입할 때 쓴 닉네임" />
       <label class="field-label" for="loginPassword">비밀번호</label>
@@ -1456,6 +1481,8 @@
     <div class="eyebrow">Sign up · 1/3</div>
     <h1 class="page-title">이메일로 회원가입</h1>
     <p class="sub">사진 한 장이면 끝나는 하루, 이메일로 바로 시작하세요.</p>
+    <div class="google-btn-wrap" id="googleBtnSignup"></div>
+    <div class="or-divider"><span>또는</span></div>
     <div class="page-form">
       <label class="field-label" for="signupNickname">닉네임</label>
       <input type="text" id="signupNickname" class="field-input" placeholder="예: 귀찮은이" />
@@ -1969,6 +1996,59 @@
   let registeredUsers = [];
   let userStore = {};
 
+  /* ---- GOOGLE SIGN-IN ---- */
+  const GOOGLE_CLIENT_ID = '499174311528-ro97s0tle9cd5hd53s9aa3f9e1rrchte.apps.googleusercontent.com';
+
+  function decodeJwt(token){
+    try{
+      const payload = token.split('.')[1];
+      const base64 = payload.replace(/-/g, '+').replace(/_/g, '/');
+      const json = decodeURIComponent(atob(base64).split('').map(c =>
+        '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2)
+      ).join(''));
+      return JSON.parse(json);
+    } catch(e){ return null; }
+  }
+
+  function handleGoogleCredentialResponse(response){
+    const payload = decodeJwt(response.credential);
+    if(!payload || !payload.email){
+      toast.textContent = 'Google 로그인 정보를 읽지 못했어요. 다시 시도해주세요.';
+      toast.classList.add('show');
+      setTimeout(()=>{ toast.classList.remove('show'); }, 2600);
+      return;
+    }
+    const googleEmail = payload.email;
+    const googleName = payload.name || googleEmail.split('@')[0];
+
+    const match = registeredUsers.find(u => u.email === googleEmail);
+    if(match){
+      closeAuth();
+      closeSignup();
+      enterHome(match.nickname, match.job, true);
+    } else {
+      closeAuth();
+      pendingUser = { nickname: googleName, email: googleEmail, password: null, viaGoogle: true };
+      openSignupStep2();
+    }
+  }
+
+  function initGoogleSignIn(){
+    if(!window.google || !window.google.accounts || !window.google.accounts.id){
+      setTimeout(initGoogleSignIn, 300);
+      return;
+    }
+    google.accounts.id.initialize({
+      client_id: GOOGLE_CLIENT_ID,
+      callback: handleGoogleCredentialResponse
+    });
+    const loginBox = document.getElementById('googleBtnLogin');
+    const signupBox = document.getElementById('googleBtnSignup');
+    if(loginBox) google.accounts.id.renderButton(loginBox, { theme:'outline', size:'large', text:'continue_with', shape:'pill', width:300 });
+    if(signupBox) google.accounts.id.renderButton(signupBox, { theme:'outline', size:'large', text:'signup_with', shape:'pill', width:300 });
+  }
+  initGoogleSignIn();
+
   function openLogin(){
     document.getElementById('loginError').textContent = '';
     authOverlay.classList.add('open');
@@ -2336,8 +2416,26 @@
   }
 
   document.getElementById('btnRecordNow').addEventListener('click', async ()=>{
+    if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+      toast.textContent = '이 미리보기 화면에서는 마이크 녹음이 지원되지 않아요. 배포된 사이트에서 이용해주세요. 지금은 "파일 선택"으로 테스트해보세요.';
+      toast.classList.add('show');
+      setTimeout(()=>{ toast.classList.remove('show'); }, 4200);
+      return;
+    }
+
+    let didRespond = false;
+    const stuckTimer = setTimeout(()=>{
+      if(!didRespond){
+        toast.textContent = '마이크 권한 요청이 응답하지 않아요 — 이 화면(미리보기)의 보안 제한일 수 있어요. 배포된 사이트에서 다시 시도해주세요.';
+        toast.classList.add('show');
+        setTimeout(()=>{ toast.classList.remove('show'); }, 4200);
+      }
+    }, 4000);
+
     try{
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      didRespond = true;
+      clearTimeout(stuckTimer);
       recordedChunks = [];
       mediaRecorder = new MediaRecorder(stream);
       mediaRecorder.ondataavailable = (e)=>{ if(e.data.size > 0) recordedChunks.push(e.data); };
@@ -2354,6 +2452,8 @@
       updateRecordingTimer();
       recordTimerInterval = setInterval(updateRecordingTimer, 500);
     } catch(err){
+      didRespond = true;
+      clearTimeout(stuckTimer);
       toast.textContent = '마이크 권한이 필요해요. 브라우저 설정을 확인해주세요.';
       toast.classList.add('show');
       setTimeout(()=>{ toast.classList.remove('show'); }, 2600);
