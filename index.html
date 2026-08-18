@@ -2091,10 +2091,13 @@
     }
 
     appHome.classList.add('active');
+    document.body.style.overflow = 'hidden';
+    appHome.scrollTop = 0;
   }
 
   function closeHome(){
     appHome.classList.remove('active');
+    document.body.style.overflow = '';
   }
 
   document.getElementById('homeClose').addEventListener('click', ()=>{ closeHome(); resetCapture(); });
@@ -2150,6 +2153,7 @@
     flashOverlay.classList.add('flashing');
     homeCapture.classList.add('hidden');
     homePreview.classList.add('active');
+    appHome.scrollTop = 0;
     homeTopbar.style.display = 'none';
 
     const meta = jobMeta(currentJob);
@@ -2326,6 +2330,7 @@
       homeProcessing.classList.remove('active');
       document.getElementById('resultAiText').textContent = '파일이 없어서 분석할 수 없어요.';
       homeResult.classList.add('active');
+      appHome.scrollTop = 0;
       return;
     }
 
@@ -2392,6 +2397,7 @@
       homeProcessing.classList.remove('active');
       document.getElementById('resultAiText').innerHTML = mdToHtml(lastSummaryText);
       homeResult.classList.add('active');
+      appHome.scrollTop = 0;
 
       if(wasTruncated){
         toast.textContent = '⚠️ 답변이 길이 제한으로 중간에 끊겼어요 — "대화 이어서 하기"로 나머지를 요청해보세요';
@@ -2422,6 +2428,7 @@
       lastSummaryText = '';
       document.getElementById('resultAiText').textContent = '분석 중 오류가 발생했어요. 다시 시도해주세요. (' + err.message + ')';
       homeResult.classList.add('active');
+      appHome.scrollTop = 0;
     }
   });
 
@@ -2532,6 +2539,7 @@
   document.getElementById('resultDone').addEventListener('click', ()=>{
     homeResult.classList.remove('active');
     homeCapture.classList.remove('hidden');
+    appHome.scrollTop = 0;
     resetCapture();
     toast.textContent = '찰칵 — 오늘 하루도 click 완료';
     toast.classList.add('show');
@@ -2737,11 +2745,13 @@
     updateScheduleTheme();
     renderSchedule();
     homeSchedule.classList.add('active');
+    appHome.scrollTop = 0;
   });
 
   document.getElementById('scheduleBack').addEventListener('click', ()=>{
     homeSchedule.classList.remove('active');
     homeCapture.classList.remove('hidden');
+    appHome.scrollTop = 0;
     homeTopbar.style.display = 'flex';
   });
 
@@ -2925,6 +2935,7 @@
     document.getElementById('resultAiText').innerHTML = mdToHtml(item.aiText);
     lastSummaryText = item.aiText;
     homeResult.classList.add('active');
+    appHome.scrollTop = 0;
     closeHistoryDrawer();
 
     resultChatLog.innerHTML = '';
@@ -2960,6 +2971,7 @@
     closeHistoryDrawer();
     homeResult.classList.remove('active');
     homeCapture.classList.remove('hidden');
+    appHome.scrollTop = 0;
     homeTopbar.style.display = 'flex';
     resetCapture();
   });
@@ -2970,6 +2982,7 @@
     homeResult.classList.remove('active');
     homeSchedule.classList.remove('active');
     homeCapture.classList.remove('hidden');
+    appHome.scrollTop = 0;
     homeTopbar.style.display = 'flex';
     photoInput.value = '';
     photoNote.value = '';
