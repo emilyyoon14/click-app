@@ -9,6 +9,7 @@
 <link rel="apple-touch-icon" href="/icon-192.png" />
 <meta name="theme-color" content="#132635" />
 <script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://developers.kakao.com/sdk/js/kakao.js"></script>
 <link rel="preconnect" href="https://cdn.jsdelivr.net" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -338,6 +339,27 @@
     height:1px;
     background:var(--line);
   }
+
+  .kakao-btn{
+    width:100%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:12px 14px;
+    border-radius:100px;
+    border:none;
+    background:#FEE500;
+    color:#191600;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:14px;
+    cursor:pointer;
+    margin-bottom:12px;
+    transition:opacity .18s ease;
+  }
+  .kakao-btn:hover{ opacity:0.9; }
+  .kakao-btn-icon{ font-size:15px; }
 
   .modal-panel{ display:none; }
   .modal-panel.active{ display:block; }
@@ -1495,6 +1517,9 @@
       <h3>이름으로 로그인</h3>
       <p class="modal-sub">가입할 때 사용한 이름과 비밀번호로 로그인하세요.</p>
       <div class="google-btn-wrap" id="googleBtnLogin"></div>
+      <button type="button" class="kakao-btn" id="kakaoBtnLogin">
+        <span class="kakao-btn-icon">💬</span> 카카오로 계속하기
+      </button>
       <div class="or-divider"><span>또는</span></div>
       <label class="field-label" for="loginName">이름</label>
       <input type="text" id="loginName" class="field-input" placeholder="가입할 때 쓴 닉네임" />
@@ -1512,8 +1537,11 @@
   <div class="page-inner">
     <div class="eyebrow">Sign up</div>
     <h1 class="page-title">회원가입</h1>
-    <p class="sub">Google 계정으로 바로 시작하세요.</p>
+    <p class="sub">Google 또는 카카오 계정으로 바로 시작하세요.</p>
     <div class="google-btn-wrap" id="googleBtnSignup"></div>
+    <button type="button" class="kakao-btn" id="kakaoBtnSignup">
+      <span class="kakao-btn-icon">💬</span> 카카오로 시작하기
+    </button>
   </div>
 </div>
 
@@ -2074,6 +2102,65 @@
   }
   initGoogleSignIn();
 
+  /* ---- KAKAO SIGN-IN ---- */
+  const KAKAO_JS_KEY = '8af086ad0011effc2fe4b8ca74cff85e';
+
+  function initKakao(){
+    if(!window.Kakao){
+      setTimeout(initKakao, 300);
+      return;
+    }
+    if(!Kakao.isInitialized()) Kakao.init(KAKAO_JS_KEY);
+  }
+  initKakao();
+
+  function handleKakaoProfile(res){
+    const kakaoId = res.id;
+    const account = res.kakao_account || {};
+    const nickname = (account.profile && account.profile.nickname) || `카카오유저${kakaoId}`;
+    const email = account.email || null;
+
+    const match = registeredUsers.find(u => u.kakaoId === kakaoId);
+    if(match){
+      closeAuth();
+      closeSignup();
+      enterHome(match.nickname, match.job, true);
+    } else {
+      closeAuth();
+      pendingUser = { nickname, email, password: null, kakaoId };
+      openSignupStep2();
+    }
+  }
+
+  function handleKakaoLogin(){
+    if(!window.Kakao || !Kakao.Auth){
+      toast.textContent = '카카오 로그인을 불러오는 중이에요. 잠시 후 다시 시도해주세요.';
+      toast.classList.add('show');
+      setTimeout(()=>{ toast.classList.remove('show'); }, 2400);
+      return;
+    }
+    Kakao.Auth.login({
+      success: function(){
+        Kakao.API.request({
+          url: '/v2/user/me',
+          success: handleKakaoProfile,
+          fail: function(){
+            toast.textContent = '카카오 프로필을 불러오지 못했어요. 다시 시도해주세요.';
+            toast.classList.add('show');
+            setTimeout(()=>{ toast.classList.remove('show'); }, 2400);
+          }
+        });
+      },
+      fail: function(){
+        toast.textContent = '카카오 로그인이 취소됐어요.';
+        toast.classList.add('show');
+        setTimeout(()=>{ toast.classList.remove('show'); }, 2200);
+      }
+    });
+  }
+  document.getElementById('kakaoBtnLogin').addEventListener('click', handleKakaoLogin);
+  document.getElementById('kakaoBtnSignup').addEventListener('click', handleKakaoLogin);
+
   function openLogin(){
     document.getElementById('loginError').textContent = '';
     authOverlay.classList.add('open');
@@ -2219,7 +2306,8 @@
       nickname: pendingUser.nickname,
       email: pendingUser.email,
       password: pendingUser.password,
-      job: pendingUser.job
+      job: pendingUser.job,
+      kakaoId: pendingUser.kakaoId || null
     });
     closeSignup();
     enterHome(pendingUser.nickname, pendingUser.job, false);
