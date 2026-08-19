@@ -734,6 +734,8 @@
     overflow-y:auto;
     -webkit-overflow-scrolling:touch;
     text-align:left;
+    display:flex;
+    flex-direction:column;
   }
   .history-drawer.open{ transform:translateX(0); }
   .history-drawer-head{
@@ -808,7 +810,7 @@
   .history-item-del:hover{ color:var(--coral); }
 
   .history-drawer-footer{
-    margin-top:18px;
+    margin-top:auto;
     padding-top:14px;
     border-top:1px dashed var(--line);
     display:flex;
@@ -816,17 +818,20 @@
     gap:4px;
   }
   .history-footer-link{
+    display:block;
+    width:100%;
     background:none;
     border:none;
     text-align:left;
-    padding:8px 4px;
-    font-family:var(--font-mono);
-    font-size:11.5px;
-    color:var(--muted-on-paper);
+    padding:10px 4px;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:13px;
+    color:var(--ink);
     cursor:pointer;
   }
-  .history-footer-link:hover{ color:var(--ink); }
-  .history-footer-link.danger{ color:var(--coral); opacity:0.75; }
+  .history-footer-link:hover{ opacity:0.7; }
+  .history-footer-link.danger{ color:var(--coral); opacity:0.85; }
   .history-footer-link.danger:hover{ opacity:1; }
 
   .account-entry-btn{
@@ -895,21 +900,6 @@
   .account-panel.open{ transform:translateX(0); }
   #settingsPanelOverlay{ z-index:380; }
   #settingsPanel{ z-index:390; }
-  #languagePanelOverlay{ z-index:400; }
-  #languagePanel{ z-index:410; }
-  .lang-option{
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-  }
-  .lang-option::after{
-    content:'';
-    width:8px; height:8px;
-    border-radius:50%;
-    background:transparent;
-  }
-  .lang-option.selected{ color:var(--ink); font-weight:700; }
-  .lang-option.selected::after{ background:var(--flash, #5EC8F2); }
   .page-back-inline{
     background:none; border:none;
     font-family:var(--font-mono);
@@ -1830,21 +1820,7 @@
     <div class="account-panel-body">
       <div class="account-panel-name" data-i18n="settings">설정</div>
       <button type="button" class="history-footer-link" id="nicknameChangeBtn" data-i18n="nicknameChangeBtn">닉네임 변경</button>
-      <button type="button" class="history-footer-link" id="languageBtn" data-i18n="languageBtn">언어</button>
       <button type="button" class="history-footer-link danger" id="accountDeleteBtn" data-i18n="accountDeleteBtn">회원 탈퇴</button>
-    </div>
-  </div>
-
-  <div class="account-panel-overlay" id="languagePanelOverlay"></div>
-  <div class="account-panel" id="languagePanel">
-    <div class="history-drawer-head">
-      <button type="button" class="page-back-inline" id="languageBackBtn" data-i18n="back">← 뒤로</button>
-      <button type="button" class="modal-close" id="languagePanelCloseBtn" aria-label="닫기">✕</button>
-    </div>
-    <div class="account-panel-body">
-      <div class="account-panel-name" data-i18n="languageBtn">언어</div>
-      <button type="button" class="history-footer-link lang-option" id="langOptionKo" data-lang="ko">한국어</button>
-      <button type="button" class="history-footer-link lang-option" id="langOptionEn" data-lang="en">English</button>
     </div>
   </div>
 
@@ -3849,35 +3825,6 @@
     closeHistoryDrawer();
   });
   settingsPanelOverlay.addEventListener('click', closeSettingsPanel);
-
-  const languagePanel = document.getElementById('languagePanel');
-  const languagePanelOverlay = document.getElementById('languagePanelOverlay');
-  function openLanguagePanel(){
-    document.querySelectorAll('.lang-option').forEach(btn=>{
-      btn.classList.toggle('selected', btn.dataset.lang === currentLang);
-    });
-    languagePanelOverlay.classList.add('open');
-    languagePanel.classList.add('open');
-  }
-  function closeLanguagePanel(){
-    languagePanelOverlay.classList.remove('open');
-    languagePanel.classList.remove('open');
-  }
-  document.getElementById('languageBtn').addEventListener('click', openLanguagePanel);
-  document.getElementById('languageBackBtn').addEventListener('click', closeLanguagePanel);
-  document.getElementById('languagePanelCloseBtn').addEventListener('click', ()=>{
-    closeLanguagePanel();
-    closeSettingsPanel();
-    closeAccountPanel();
-    closeHistoryDrawer();
-  });
-  languagePanelOverlay.addEventListener('click', closeLanguagePanel);
-  document.querySelectorAll('.lang-option').forEach(btn=>{
-    btn.addEventListener('click', ()=>{
-      applyLanguage(btn.dataset.lang);
-      closeLanguagePanel();
-    });
-  });
 
   document.getElementById('logoutBtn').addEventListener('click', ()=>{
     closeAccountPanel();
