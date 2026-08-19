@@ -1687,6 +1687,7 @@
     <div class="history-list" id="historyList"></div>
     <p class="schedule-empty" id="historyEmpty">아직 분석한 대화가 없어요.</p>
     <div class="history-drawer-footer">
+      <button type="button" class="history-footer-link" id="nicknameChangeBtn">닉네임 변경</button>
       <button type="button" class="history-footer-link" id="historyClearAllBtn">대화 기록 전체 삭제</button>
       <button type="button" class="history-footer-link danger" id="accountDeleteBtn">회원 탈퇴</button>
     </div>
@@ -2152,7 +2153,8 @@
   function handleKakaoProfile(res){
     const kakaoId = res.id;
     const account = res.kakao_account || {};
-    const nickname = (account.profile && account.profile.nickname) || `카카오유저${kakaoId}`;
+    const props = res.properties || {};
+    const nickname = props.nickname || (account.profile && account.profile.nickname) || `카카오유저${kakaoId}`;
     const email = account.email || null;
 
     const match = registeredUsers.find(u => u.kakaoId === kakaoId);
@@ -3466,6 +3468,41 @@
     appHome.scrollTop = 0;
     homeTopbar.style.display = 'flex';
     resetCapture();
+  });
+
+  document.getElementById('nicknameChangeBtn').addEventListener('click', ()=>{
+    const oldNickname = currentNickname;
+    const input = prompt('새 닉네임을 입력해주세요', oldNickname);
+    if(input === null) return;
+    const newNickname = input.trim();
+    if(!newNickname){
+      toast.textContent = '닉네임을 입력해주세요';
+      toast.classList.add('show');
+      setTimeout(()=>{ toast.classList.remove('show'); }, 2000);
+      return;
+    }
+    if(newNickname === oldNickname) return;
+    if(registeredUsers.some(u => u.nickname === newNickname)){
+      toast.textContent = '이미 사용 중인 닉네임이에요';
+      toast.classList.add('show');
+      setTimeout(()=>{ toast.classList.remove('show'); }, 2200);
+      return;
+    }
+
+    const userRecord = registeredUsers.find(u => u.nickname === oldNickname);
+    if(userRecord) userRecord.nickname = newNickname;
+
+    if(userStore[oldNickname]){
+      userStore[newNickname] = userStore[oldNickname];
+      delete userStore[oldNickname];
+    }
+
+    currentNickname = newNickname;
+    document.getElementById('homeGreet').textContent = `안녕하세요, ${newNickname}님.`;
+
+    toast.textContent = '닉네임이 변경됐어요';
+    toast.classList.add('show');
+    setTimeout(()=>{ toast.classList.remove('show'); }, 2000);
   });
 
   document.getElementById('historyClearAllBtn').addEventListener('click', ()=>{
