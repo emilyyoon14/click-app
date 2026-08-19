@@ -700,7 +700,11 @@
     color:var(--ink);
     cursor:pointer;
     white-space:nowrap;
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
   }
+  .topbar-logo-icon{ flex-shrink:0; }
   .topbar-btn:hover{ background:var(--paper); }
 
   .history-overlay{
@@ -818,6 +822,87 @@
   .history-footer-link:hover{ color:var(--ink); }
   .history-footer-link.danger{ color:var(--coral); opacity:0.75; }
   .history-footer-link.danger:hover{ opacity:1; }
+
+  .account-entry-btn{
+    width:100%;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    padding:10px 8px;
+    margin-top:6px;
+    border:none;
+    background:none;
+    border-radius:10px;
+    cursor:pointer;
+    text-align:left;
+  }
+  .account-entry-btn:hover{ background:var(--paper); }
+  .account-entry-avatar{
+    width:30px; height:30px;
+    border-radius:50%;
+    background:var(--ink);
+    color:var(--flash);
+    flex-shrink:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:12px;
+  }
+  .account-entry-name{
+    flex:1;
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:13px;
+    color:var(--ink);
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .account-entry-arrow{
+    color:var(--muted-on-paper);
+    font-size:16px;
+  }
+
+  .account-panel-overlay{
+    position:fixed; inset:0;
+    background:rgba(24,26,32,0.4);
+    z-index:360;
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .2s ease;
+  }
+  .account-panel-overlay.open{ opacity:1; pointer-events:auto; }
+  .account-panel{
+    position:fixed; top:0; left:0; bottom:0;
+    width:300px; max-width:82vw;
+    background:var(--bg);
+    z-index:370;
+    padding:22px 20px;
+    box-shadow:20px 0 50px -20px rgba(0,0,0,0.3);
+    transform:translateX(-100%);
+    transition:transform .22s ease;
+    overflow-y:auto;
+    text-align:left;
+  }
+  .account-panel.open{ transform:translateX(0); }
+  .page-back-inline{
+    background:none; border:none;
+    font-family:var(--font-mono);
+    font-size:13px;
+    color:var(--muted);
+    cursor:pointer;
+  }
+  .page-back-inline:hover{ color:var(--ink); }
+  .account-panel-body{ margin-top:22px; }
+  .account-panel-name{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:18px;
+    color:var(--ink);
+    margin-bottom:18px;
+  }
 
   .schedule-save-row{
     width:100%;
@@ -1673,7 +1758,13 @@
 <div class="app-home" id="appHome">
   <button type="button" class="modal-close home-close" id="homeClose" aria-label="닫기">✕</button>
   <div class="home-topbar" id="homeTopbar">
-    <button type="button" class="topbar-btn" id="historyOpenBtn" aria-label="채팅 목록">☰ 채팅 목록</button>
+    <button type="button" class="topbar-btn" id="historyOpenBtn" aria-label="채팅 목록">
+      <svg class="topbar-logo-icon" viewBox="0 0 32 32" width="16" height="16" aria-hidden="true">
+        <circle cx="16" cy="16" r="16" fill="#132635"/>
+        <circle cx="16" cy="16" r="4.5" fill="#5EC8F2"/>
+      </svg>
+      채팅 목록
+    </button>
     <button type="button" class="topbar-btn" id="scheduleOpenBtn" aria-label="내 일정">📅 내 일정</button>
   </div>
 
@@ -1687,8 +1778,24 @@
     <div class="history-list" id="historyList"></div>
     <p class="schedule-empty" id="historyEmpty">아직 분석한 대화가 없어요.</p>
     <div class="history-drawer-footer">
-      <button type="button" class="history-footer-link" id="nicknameChangeBtn">닉네임 변경</button>
       <button type="button" class="history-footer-link" id="historyClearAllBtn">대화 기록 전체 삭제</button>
+      <button type="button" class="account-entry-btn" id="accountOpenBtn">
+        <span class="account-entry-avatar" id="accountEntryAvatar"></span>
+        <span class="account-entry-name" id="accountEntryName">내 계정</span>
+        <span class="account-entry-arrow">›</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="account-panel-overlay" id="accountPanelOverlay"></div>
+  <div class="account-panel" id="accountPanel">
+    <div class="history-drawer-head">
+      <button type="button" class="page-back-inline" id="accountBackBtn">← 뒤로</button>
+      <button type="button" class="modal-close" id="accountPanelCloseBtn" aria-label="닫기">✕</button>
+    </div>
+    <div class="account-panel-body">
+      <div class="account-panel-name" id="accountPanelName"></div>
+      <button type="button" class="history-footer-link" id="nicknameChangeBtn">닉네임 변경</button>
       <button type="button" class="history-footer-link danger" id="accountDeleteBtn">회원 탈퇴</button>
     </div>
   </div>
@@ -3448,8 +3555,18 @@
     }
   }
 
+  function renderAccountEntry(){
+    const nameEl = document.getElementById('accountEntryName');
+    const avatarEl = document.getElementById('accountEntryAvatar');
+    const panelNameEl = document.getElementById('accountPanelName');
+    if(nameEl) nameEl.textContent = currentNickname || '내 계정';
+    if(avatarEl) avatarEl.textContent = (currentNickname || '?').slice(0, 1).toUpperCase();
+    if(panelNameEl) panelNameEl.textContent = currentNickname || '내 계정';
+  }
+
   function openHistoryDrawer(){
     renderHistory();
+    renderAccountEntry();
     historyOverlay.classList.add('open');
     historyDrawer.classList.add('open');
   }
@@ -3457,6 +3574,25 @@
     historyOverlay.classList.remove('open');
     historyDrawer.classList.remove('open');
   }
+
+  const accountPanel = document.getElementById('accountPanel');
+  const accountPanelOverlay = document.getElementById('accountPanelOverlay');
+  function openAccountPanel(){
+    renderAccountEntry();
+    accountPanelOverlay.classList.add('open');
+    accountPanel.classList.add('open');
+  }
+  function closeAccountPanel(){
+    accountPanelOverlay.classList.remove('open');
+    accountPanel.classList.remove('open');
+  }
+  document.getElementById('accountOpenBtn').addEventListener('click', openAccountPanel);
+  document.getElementById('accountBackBtn').addEventListener('click', closeAccountPanel);
+  document.getElementById('accountPanelCloseBtn').addEventListener('click', ()=>{
+    closeAccountPanel();
+    closeHistoryDrawer();
+  });
+  accountPanelOverlay.addEventListener('click', closeAccountPanel);
 
   document.getElementById('historyOpenBtn').addEventListener('click', openHistoryDrawer);
   document.getElementById('historyCloseBtn').addEventListener('click', closeHistoryDrawer);
@@ -3499,6 +3635,7 @@
 
     currentNickname = newNickname;
     document.getElementById('homeGreet').textContent = `안녕하세요, ${newNickname}님.`;
+    renderAccountEntry();
 
     toast.textContent = '닉네임이 변경됐어요';
     toast.classList.add('show');
@@ -3522,6 +3659,7 @@
     const nickname = currentNickname;
     registeredUsers = registeredUsers.filter(u => u.nickname !== nickname);
     delete userStore[nickname];
+    closeAccountPanel();
     closeHistoryDrawer();
     closeHome();
     currentNickname = '';
