@@ -1574,6 +1574,42 @@
     font-size:13px;
   }
 
+  /* ===== PRICING LOCK (blurred until paid tiers go live) ===== */
+  .receipt-lock-wrap{ position:relative; }
+  .receipt-lock-blur{
+    filter:blur(6px);
+    user-select:none;
+    pointer-events:none;
+    transition:filter .35s ease;
+  }
+  .receipt-lock-badge{
+    position:absolute;
+    inset:0;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    text-align:center;
+    background:rgba(253,251,244,0.35);
+    border-radius:8px;
+    opacity:1;
+    transition:opacity .35s ease;
+  }
+  .receipt-lock-badge .r-lock-title{
+    font-family:var(--font-display);
+    font-weight:800;
+    font-size:13px;
+    color:var(--ink);
+  }
+  .receipt-lock-badge .r-lock-sub{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--muted-on-paper);
+  }
+  .receipt-lock-wrap.unlocked .receipt-lock-blur{ filter:none; pointer-events:auto; }
+  .receipt-lock-wrap.unlocked .receipt-lock-badge{ opacity:0; pointer-events:none; }
+
   /* ===== CTA FOOTER ===== */
   .cta-footer{
     text-align:center;
@@ -2138,23 +2174,31 @@
         </div>
         <div class="r-price">FREE</div>
       </div>
-      <div class="r-row">
-        <div>
-          <div class="r-name">프리미엄 구독</div>
-          <span class="r-desc">무제한 분석 · PDF 다운로드 · AI 오답노트</span>
+      <div class="receipt-lock-wrap" id="receiptLockWrap">
+        <div class="receipt-lock-blur">
+          <div class="r-row">
+            <div>
+              <div class="r-name">프리미엄 구독</div>
+              <span class="r-desc">무제한 분석 · PDF 다운로드 · AI 오답노트</span>
+            </div>
+            <div class="r-price">₩2,900~</div>
+          </div>
+          <div class="r-row">
+            <div>
+              <div class="r-name">B2B 제휴</div>
+              <span class="r-desc">자취용품·밀키트·스터디카페 매칭</span>
+            </div>
+            <div class="r-price">수수료</div>
+          </div>
+          <div class="r-total">
+            <span>TOTAL EFFORT</span>
+            <span>0원 · 0분</span>
+          </div>
         </div>
-        <div class="r-price">₩2,900~</div>
-      </div>
-      <div class="r-row">
-        <div>
-          <div class="r-name">B2B 제휴</div>
-          <span class="r-desc">자취용품·밀키트·스터디카페 매칭</span>
+        <div class="receipt-lock-badge">
+          <span class="r-lock-title">🔒 준비 중</span>
+          <span class="r-lock-sub">유료 전환 시 공개돼요</span>
         </div>
-        <div class="r-price">수수료</div>
-      </div>
-      <div class="r-total">
-        <span>TOTAL EFFORT</span>
-        <span>0원 · 0분</span>
       </div>
     </div>
   </div>
@@ -2173,6 +2217,13 @@
 </footer>
 
 <script>
+  // ⭐ 유료 전환 시 이 값을 true로 바꾸면 요금제 영역의 모자이크가 풀려요.
+  const PRICING_LIVE = false;
+  (function applyPricingLock(){
+    const wrap = document.getElementById('receiptLockWrap');
+    if(wrap && PRICING_LIVE) wrap.classList.add('unlocked');
+  })();
+
   const flashOverlay = document.getElementById('flashOverlay');
   const toast = document.getElementById('toast');
   const highlightCard = document.getElementById('cardStudy');
