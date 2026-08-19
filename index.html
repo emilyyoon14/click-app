@@ -427,8 +427,9 @@
     position:absolute; top:26px; left:24px;
     background:none; border:none;
     font-family:var(--font-mono);
-    font-size:13px;
-    color:var(--muted);
+    font-weight:700;
+    font-size:12px;
+    color:var(--ink);
     cursor:pointer;
   }
   .page-back:hover{ color:var(--ink); }
@@ -696,7 +697,8 @@
     border-radius:100px;
     padding:9px 16px;
     font-family:var(--font-mono);
-    font-size:12.5px;
+    font-weight:700;
+    font-size:12px;
     color:var(--ink);
     cursor:pointer;
     white-space:nowrap;
@@ -1055,8 +1057,9 @@
   .schedule-extract-loading .proc-text{ margin-top:12px; }
   .schedule-section-label{
     font-family:var(--font-mono);
-    font-size:11px;
-    color:var(--muted-on-paper);
+    font-weight:700;
+    font-size:12px;
+    color:var(--ink);
     letter-spacing:.04em;
     margin-bottom:12px;
     text-align:left;
@@ -1582,33 +1585,7 @@
     pointer-events:none;
     transition:filter .35s ease;
   }
-  .receipt-lock-badge{
-    position:absolute;
-    inset:0;
-    display:flex;
-    flex-direction:column;
-    align-items:center;
-    justify-content:center;
-    gap:4px;
-    text-align:center;
-    background:rgba(253,251,244,0.35);
-    border-radius:8px;
-    opacity:1;
-    transition:opacity .35s ease;
-  }
-  .receipt-lock-badge .r-lock-title{
-    font-family:var(--font-display);
-    font-weight:800;
-    font-size:13px;
-    color:var(--ink);
-  }
-  .receipt-lock-badge .r-lock-sub{
-    font-family:var(--font-mono);
-    font-size:10.5px;
-    color:var(--muted-on-paper);
-  }
   .receipt-lock-wrap.unlocked .receipt-lock-blur{ filter:none; pointer-events:auto; }
-  .receipt-lock-wrap.unlocked .receipt-lock-badge{ opacity:0; pointer-events:none; }
 
   /* ===== CTA FOOTER ===== */
   .cta-footer{
@@ -2162,20 +2139,20 @@
       <h2>요금제</h2>
       <p>귀찮음을 없애는 데 드는 비용, 영수증처럼 투명하게.</p>
     </div>
-    <div class="receipt">
-      <div class="receipt-head">
-        <div class="r-logo">click</div>
-        <div class="r-sub">RECEIPT NO. 0001 · 매일 자정 리셋</div>
-      </div>
-      <div class="r-row">
-        <div>
-          <div class="r-name">기본 팩</div>
-          <span class="r-desc">하루 사진 분석 3회</span>
-        </div>
-        <div class="r-price">FREE</div>
-      </div>
-      <div class="receipt-lock-wrap" id="receiptLockWrap">
-        <div class="receipt-lock-blur">
+    <div class="receipt-lock-wrap" id="receiptLockWrap">
+      <div class="receipt-lock-blur">
+        <div class="receipt">
+          <div class="receipt-head">
+            <div class="r-logo">click</div>
+            <div class="r-sub">RECEIPT NO. 0001 · 매일 자정 리셋</div>
+          </div>
+          <div class="r-row">
+            <div>
+              <div class="r-name">기본 팩</div>
+              <span class="r-desc">하루 사진 분석 3회</span>
+            </div>
+            <div class="r-price">FREE</div>
+          </div>
           <div class="r-row">
             <div>
               <div class="r-name">프리미엄 구독</div>
@@ -2194,10 +2171,6 @@
             <span>TOTAL EFFORT</span>
             <span>0원 · 0분</span>
           </div>
-        </div>
-        <div class="receipt-lock-badge">
-          <span class="r-lock-title">🔒 준비 중</span>
-          <span class="r-lock-sub">유료 전환 시 공개돼요</span>
         </div>
       </div>
     </div>
