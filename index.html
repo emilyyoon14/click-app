@@ -1991,6 +1991,9 @@
   <div class="wrap">
     <div class="logo">click<span class="dot">.</span></div>
     <div class="nav-actions">
+      <button type="button" class="nav-link" id="downloadBtn" style="display:none;">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>다운로드
+      </button>
       <button type="button" class="nav-link" id="loginBtn">로그인</button>
       <button type="button" class="nav-cta" id="signupBtn">회원가입</button>
     </div>
@@ -3920,6 +3923,31 @@
       navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
     });
   }
+
+  /* ---- PC/데스크톱 설치(다운로드) 버튼 ---- */
+  let deferredInstallPrompt = null;
+  const downloadBtn = document.getElementById('downloadBtn');
+
+  window.addEventListener('beforeinstallprompt', (e)=>{
+    e.preventDefault();
+    deferredInstallPrompt = e;
+    if(downloadBtn) downloadBtn.style.display = 'inline-flex';
+  });
+
+  if(downloadBtn){
+    downloadBtn.addEventListener('click', async ()=>{
+      if(!deferredInstallPrompt) return;
+      deferredInstallPrompt.prompt();
+      const { outcome } = await deferredInstallPrompt.userChoice;
+      deferredInstallPrompt = null;
+      downloadBtn.style.display = 'none';
+    });
+  }
+
+  window.addEventListener('appinstalled', ()=>{
+    deferredInstallPrompt = null;
+    if(downloadBtn) downloadBtn.style.display = 'none';
+  });
 </script>
 
 </body>
