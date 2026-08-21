@@ -1294,6 +1294,22 @@
     overflow-wrap:anywhere;
     min-width:0;
   }
+  .payer-link{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:14px;
+    padding:9px 14px;
+    border-radius:100px;
+    background:rgba(94,200,242,0.14);
+    color:var(--flash-deep);
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:12.5px;
+    text-decoration:none;
+    transition:background .15s ease;
+  }
+  .payer-link:hover{ background:rgba(94,200,242,0.24); }
   .result-ai-text p{ margin:0 0 10px; }
   .result-ai-text p:last-child{ margin-bottom:0; }
   .result-ai-text strong{ color:var(--ink); font-weight:800; }
@@ -1926,6 +1942,7 @@
           <p class="result-card-note" id="resultNote"></p>
           <div class="result-card-label" style="margin-top:14px;">AI 정리 결과</div>
           <div class="result-ai-text" id="resultAiText">분석 중…</div>
+          <a class="payer-link" id="payerLink" href="#" target="_blank" rel="noopener" style="display:none;"></a>
         </div>
       </div>
     </div>
@@ -3096,6 +3113,31 @@
     throw lastErr || new Error('알 수 없는 오류가 발생했어요.');
   }
 
+  /* ---- 결제처 바로가기 안내 ---- */
+  const KNOWN_PAYERS = [
+    { match: /위택스|wetax/i, name: '위택스', url: 'https://www.wetax.go.kr' },
+    { match: /홈택스|국세청|hometax/i, name: '국세청 홈택스', url: 'https://www.hometax.go.kr' },
+    { match: /정부24|gov24/i, name: '정부24', url: 'https://www.gov.kr' },
+    { match: /\bKT\b|케이티/i, name: 'KT', url: 'https://www.kt.com/product/billProduct.do' },
+    { match: /SKT|SK텔레콤/i, name: 'SKT', url: 'https://www.tworld.co.kr' },
+    { match: /LG\s*U\+|엘지유플러스|유플러스/i, name: 'LG U+', url: 'https://www.lguplus.com' },
+    { match: /국민은행|KB국민/i, name: '국민은행', url: 'https://obank.kbstar.com' },
+    { match: /신한은행/i, name: '신한은행', url: 'https://bank.shinhan.com' },
+    { match: /우리은행/i, name: '우리은행', url: 'https://spot.wooribank.com' },
+    { match: /하나은행/i, name: '하나은행', url: 'https://www.kebhana.com' },
+    { match: /농협은행|NH농협/i, name: '농협은행', url: 'https://banking.nonghyup.com' },
+    { match: /카카오뱅크/i, name: '카카오뱅크', url: 'https://www.kakaobank.com' },
+    { match: /토스뱅크|토스/i, name: '토스', url: 'https://www.toss.im' },
+  ];
+
+  function resolvePayerLink(payerName){
+    if(!payerName) return null;
+    const known = KNOWN_PAYERS.find(p => p.match.test(payerName));
+    if(known) return { label: `${known.name}에서 납부 가능`, url: known.url };
+    // 모르는 결제처는 검색 링크로 자연스럽게 대체(fallback)
+    return { label: `${payerName} 결제처 검색하기`, url: `https://www.google.com/search?q=${encodeURIComponent(payerName + ' 납부')}` };
+  }
+
   function buildPrompt(job, note){
     const base = note ? `유저의 요청: "${note}"` : '유저가 별도 설명을 남기지 않았어요.';
     const priorityNote = note
@@ -3105,7 +3147,7 @@
     if(job === '학생'){
       taskPart = `당신은 학생을 위한 학습 도우미 앱 "click"의 AI예요. 첨부된 자료를 보고, ${base}${priorityNote}\n\n답변의 맨 첫 줄에는 반드시 아래 형식으로 이 자료의 핵심 개념/단원을 짧게 적어주세요 (이 줄은 시스템이 자동으로 "자주 막히는 주제"를 추적하는 데 씁니다, 화면엔 이 줄만 따로 안 보여요):\n주제: 2~4단어로 된 핵심 개념명\n\n그 다음 줄부터, 유저가 별도 요청을 하지 않았다면 아래 기본 형식을 따르세요:\n1) 핵심 3줄 요약\n2) 헷갈리기 쉬운 용어 1~2개 해설\n3) 예상 문제 1개\n4) 다음에 뭘 더 보면 좋을지 한 줄 제안 (단순 요약이 아니라, "다음엔 ~을 더 연습해보세요" 같은 방향 제시로)`;
     } else if(job === '직장인'){
-      taskPart = `당신은 직장인을 위한 정리 도우미 앱 "click"의 AI예요. 첨부된 영수증/고지서/문서를 보고, ${base}${priorityNote}\n\n답변의 맨 첫 줄에는 반드시 아래 형식으로 납부기한(또는 관련 날짜), 짧은 제목, 총액을 적어주세요 (이 줄은 시스템이 자동으로 가계부·캘린더에 등록하는 데 씁니다):\n일정: YYYY-MM-DD | 짧은 제목 | 숫자만된 총액(원 단위, 쉼표 없이)\n날짜를 찾을 수 없으면 "일정: 없음" 이라고만 적어주세요. 금액을 알 수 없으면 마지막 칸에 0을 적어주세요. 연도가 안 보이면 ${new Date().getFullYear()}년으로 가정하세요.\n\n그 다음 줄부터, 유저가 별도 요청을 하지 않았다면 아래 기본 형식을 따르세요:\n1) 항목/금액 정리\n2) 납부기한이나 특이사항 (있다면)\n3) 한 줄 처리 제안`;
+      taskPart = `당신은 직장인을 위한 정리 도우미 앱 "click"의 AI예요. 첨부된 영수증/고지서/문서를 보고, ${base}${priorityNote}\n\n답변의 맨 첫 줄에는 반드시 아래 형식으로 납부기한(또는 관련 날짜), 짧은 제목, 총액을 적어주세요 (이 줄은 시스템이 자동으로 가계부·캘린더에 등록하는 데 씁니다):\n일정: YYYY-MM-DD | 짧은 제목 | 숫자만된 총액(원 단위, 쉼표 없이)\n날짜를 찾을 수 없으면 "일정: 없음" 이라고만 적어주세요. 금액을 알 수 없으면 마지막 칸에 0을 적어주세요. 연도가 안 보이면 ${new Date().getFullYear()}년으로 가정하세요.\n\n둘째 줄에는 반드시 아래 형식으로 이 고지서/영수증을 납부·결제할 수 있는 곳(결제처)을 적어주세요 (이 줄도 화면엔 따로 안 보이고, 시스템이 "결제처 바로가기" 버튼을 만드는 데 씁니다):\n결제처: 결제처 이름 (예: 위택스, 국세청 홈택스, KT, 국민은행, 관리사무소 등)\n결제처를 알 수 없으면 "결제처: 없음" 이라고만 적어주세요.\n\n그 다음 줄부터, 유저가 별도 요청을 하지 않았다면 아래 기본 형식을 따르세요:\n1) 항목/금액 정리\n2) 납부기한이나 특이사항 (있다면)\n3) 한 줄 처리 제안`;
     } else {
       taskPart = `당신은 귀찮은 일을 대신 정리해주는 앱 "click"의 AI예요. 첨부된 자료를 보고, ${base}${priorityNote}\n\n유저가 별도 요청을 하지 않았다면, 핵심을 3줄 이내로 정리해주세요.`;
     }
@@ -3155,6 +3197,8 @@
       : currentJob ? `${currentJob} · 맞춤 정리`
       : '맞춤 정리';
 
+    document.getElementById('payerLink').style.display = 'none';
+
     homePreview.classList.remove('active');
     homeProcessing.classList.add('active');
     document.getElementById('procText').textContent = fileAudio ? 'AI가 녹음을 듣고 있어요…' : 'AI가 파일을 분석하고 있어요…';
@@ -3201,6 +3245,7 @@
       let autoAddedDate = null;
       let autoAddedAmount = null;
       let detectedTopic = null;
+      let detectedPayer = null;
       if(currentJob === '직장인'){
         const lines = aiText.split('\n');
         const firstLine = (lines[0] || '').trim();
@@ -3223,6 +3268,17 @@
           lines.shift();
           aiText = lines.join('\n').replace(/^\n+/, '').trim();
         }
+
+        const payerLine = (lines[0] || '').trim();
+        const pm = payerLine.match(/^결제처:\s*(.+)$/);
+        if(pm){
+          const payerName = pm[1].trim();
+          if(payerName && payerName !== '없음'){
+            detectedPayer = payerName;
+          }
+          lines.shift();
+          aiText = lines.join('\n').replace(/^\n+/, '').trim();
+        }
       } else if(currentJob === '학생'){
         const lines = aiText.split('\n');
         const firstLine = (lines[0] || '').trim();
@@ -3240,6 +3296,16 @@
       document.getElementById('resultAiText').innerHTML = mdToHtml(lastSummaryText);
       homeResult.classList.add('active');
       appHome.scrollTop = 0;
+
+      const payerLinkEl = document.getElementById('payerLink');
+      const payerLinkInfo = resolvePayerLink(detectedPayer);
+      if(payerLinkInfo){
+        payerLinkEl.href = payerLinkInfo.url;
+        payerLinkEl.textContent = `💳 ${payerLinkInfo.label} →`;
+        payerLinkEl.style.display = 'inline-flex';
+      } else {
+        payerLinkEl.style.display = 'none';
+      }
 
       if(wasTruncated){
         toast.textContent = '⚠️ 답변이 길이 제한으로 중간에 끊겼어요 — "대화 이어서 하기"로 나머지를 요청해보세요';
@@ -3882,6 +3948,7 @@
     document.getElementById('resultNote').textContent = item.note;
     setResultThumb(item.thumb);
     document.getElementById('resultAiText').innerHTML = mdToHtml(item.aiText);
+    document.getElementById('payerLink').style.display = 'none';
     lastSummaryText = item.aiText;
     homeResult.classList.add('active');
     appHome.scrollTop = 0;
