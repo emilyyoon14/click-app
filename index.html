@@ -3248,12 +3248,29 @@
       let detectedPayer = null;
       if(currentJob === '직장인'){
         const lines = aiText.split('\n');
-        const firstLine = (lines[0] || '').trim();
-        const m = firstLine.match(/^일정:\s*(\d{4}-\d{2}-\d{2})\s*\|\s*([^|]+?)\s*\|\s*([\d.]+)\s*$/);
-        if(m){
-          autoAddedDate = m[1];
-          const scheduleTitle = m[2].trim();
-          const parsedAmount = Number(m[3]);
+        const scanLimit = Math.min(lines.length, 5);
+        let scheduleLineIdx = -1;
+        let payerLineIdx = -1;
+        let scheduleMatch = null;
+        let payerMatch = null;
+
+        for(let i = 0; i < scanLimit; i++){
+          const line = (lines[i] || '').trim();
+          if(scheduleLineIdx === -1){
+            const m = line.match(/^일정:\s*(\d{4}-\d{2}-\d{2})\s*\|\s*([^|]+?)\s*\|\s*([\d.,]+)\s*$/);
+            if(m){ scheduleLineIdx = i; scheduleMatch = m; continue; }
+            if(/^일정:\s*없음\s*$/.test(line)){ scheduleLineIdx = i; continue; }
+          }
+          if(payerLineIdx === -1){
+            const pm = line.match(/^결제처:\s*(.+)$/);
+            if(pm){ payerLineIdx = i; payerMatch = pm; }
+          }
+        }
+
+        if(scheduleMatch){
+          autoAddedDate = scheduleMatch[1];
+          const scheduleTitle = scheduleMatch[2].trim();
+          const parsedAmount = Number(scheduleMatch[3].replace(/,/g, ''));
           autoAddedAmount = parsedAmount > 0 ? parsedAmount : null;
           addScheduleItem({
             date: autoAddedDate,
@@ -3262,22 +3279,18 @@
             thumb: thumbSrc,
             amount: autoAddedAmount
           });
-          lines.shift();
-          aiText = lines.join('\n').replace(/^\n+/, '').trim();
-        } else if(/^일정:\s*없음\s*$/.test(firstLine)){
-          lines.shift();
-          aiText = lines.join('\n').replace(/^\n+/, '').trim();
         }
 
-        const payerLine = (lines[0] || '').trim();
-        const pm = payerLine.match(/^결제처:\s*(.+)$/);
-        if(pm){
-          const payerName = pm[1].trim();
+        if(payerMatch){
+          const payerName = payerMatch[1].trim();
           if(payerName && payerName !== '없음'){
             detectedPayer = payerName;
           }
-          lines.shift();
-          aiText = lines.join('\n').replace(/^\n+/, '').trim();
+        }
+
+        const removeIdx = new Set([scheduleLineIdx, payerLineIdx].filter(i => i !== -1));
+        if(removeIdx.size > 0){
+          aiText = lines.filter((_, i) => !removeIdx.has(i)).join('\n').replace(/^\n+/, '').trim();
         }
       } else if(currentJob === '학생'){
         const lines = aiText.split('\n');
@@ -3292,6 +3305,13 @@
       }
 
       lastSummaryText = aiText || '결과를 받지 못했어요.';
+
+      // 결제처: 줄 파싱이 실패했을 경우를 대비한 보험 — 본문에 알려진 결제처 이름이 언급되면 그걸로 대체
+      if(currentJob === '직장인' && !detectedPayer){
+        const fallbackHit = KNOWN_PAYERS.find(p => p.match.test(lastSummaryText));
+        if(fallbackHit) detectedPayer = fallbackHit.name;
+      }
+
       homeProcessing.classList.remove('active');
       document.getElementById('resultAiText').innerHTML = mdToHtml(lastSummaryText);
       homeResult.classList.add('active');
