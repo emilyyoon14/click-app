@@ -1993,6 +1993,7 @@
           <button type="button" class="field-submit" id="scheduleExtractBtn" data-i18n="scheduleExtractBtn">AI로 일정 추출하기</button>
         </div>
         <div class="field-error" id="scheduleExtractError"></div>
+        <a class="payer-link" id="schedulePayerLink" href="#" target="_blank" rel="noopener" style="display:none;"></a>
       </div>
 
       <div class="schedule-extract-loading" id="scheduleExtractLoading" style="display:none;">
@@ -3834,22 +3835,29 @@
     scheduleFileDataUrl = `data:${file.type || 'image/jpeg'};base64,${base64}`;
     schedulePhotoThumb.src = scheduleFileDataUrl;
     schedulePhotoPreview.style.display = 'block';
+    document.getElementById('schedulePayerLink').style.display = 'none';
   });
 
   document.getElementById('scheduleExtractBtn').addEventListener('click', async ()=>{
     const file = scheduleFileInput.files && scheduleFileInput.files[0];
     const err = document.getElementById('scheduleExtractError');
+    const schedulePayerLink = document.getElementById('schedulePayerLink');
     if(!file){ err.textContent = '사진을 먼저 선택해주세요'; return; }
     err.textContent = '';
+    schedulePayerLink.style.display = 'none';
 
     panelPhoto.style.display = 'none';
     document.getElementById('scheduleExtractLoading').style.display = 'flex';
+
+    const isBudgetMode = currentJob === '직장인';
 
     try{
       const base64Data = await fileToBase64(file);
       const mediaType = file.type || 'image/jpeg';
       const year = new Date().getFullYear();
-      const promptText = `이 사진은 시험 일정표 또는 시간표예요. 사진에서 확인되는 모든 일정을 아래 형식으로만, 한 줄에 하나씩 출력하세요. 다른 설명, 인사말, 제목 없이 목록만 출력하세요.\n형식: YYYY-MM-DD | 과목명 또는 일정명\n연도가 사진에 안 보이면 ${year}년으로 가정하세요. 요일만 있고 정확한 날짜가 없으면 알 수 있는 범위에서 추정하세요.`;
+      const promptText = isBudgetMode
+        ? `이 사진은 영수증, 고지서, 또는 납부 일정표예요. 사진에서 확인되는 모든 항목을 아래 형식으로만, 한 줄에 하나씩 출력하세요. 다른 설명, 인사말, 제목 없이 목록만 출력하세요.\n형식: YYYY-MM-DD | 항목명 | 숫자만된 금액(원 단위, 없으면 0) | 결제처(위택스/국세청 홈택스/KT 등, 모르면 없음)\n연도가 사진에 안 보이면 ${year}년으로 가정하세요. 요일만 있고 정확한 날짜가 없으면 알 수 있는 범위에서 추정하세요.`
+        : `이 사진은 시험 일정표 또는 시간표예요. 사진에서 확인되는 모든 일정을 아래 형식으로만, 한 줄에 하나씩 출력하세요. 다른 설명, 인사말, 제목 없이 목록만 출력하세요.\n형식: YYYY-MM-DD | 과목명 또는 일정명\n연도가 사진에 안 보이면 ${year}년으로 가정하세요. 요일만 있고 정확한 날짜가 없으면 알 수 있는 범위에서 추정하세요.`;
 
       const data = await fetchGeminiWithRetry({
         model: 'gemini-3.6-flash',
@@ -3871,20 +3879,53 @@
         .trim();
 
       const lines = text.split('\n').map(l => l.trim()).filter(Boolean);
-      const re = /^(\d{4}-\d{2}-\d{2})\s*\|\s*(.+)$/;
+      const re = isBudgetMode
+        ? /^(\d{4}-\d{2}-\d{2})\s*\|\s*([^|]+?)\s*\|\s*([\d.,]+)\s*\|\s*(.+)$/
+        : /^(\d{4}-\d{2}-\d{2})\s*\|\s*(.+)$/;
       let addedCount = 0;
+      let extractedPayer = null;
       lines.forEach(line=>{
         const m = line.match(re);
         if(m){
-          addScheduleItem({
-            date: m[1],
-            note: m[2],
-            summary: '사진에서 자동 추출',
-            thumb: scheduleFileDataUrl
-          });
+          if(isBudgetMode){
+            const amountNum = Number(m[3].replace(/,/g, ''));
+            addScheduleItem({
+              date: m[1],
+              note: m[2].trim(),
+              summary: '사진에서 자동 추출',
+              thumb: scheduleFileDataUrl,
+              amount: amountNum > 0 ? amountNum : null
+            });
+            const payerName = m[4].trim();
+            if(!extractedPayer && payerName && payerName !== '없음'){
+              extractedPayer = payerName;
+            }
+          } else {
+            addScheduleItem({
+              date: m[1],
+              note: m[2],
+              summary: '사진에서 자동 추출',
+              thumb: scheduleFileDataUrl
+            });
+          }
           addedCount++;
         }
       });
+
+      // 형식 파싱이 실패했을 경우를 대비한 보험 — 본문에 알려진 결제처 이름이 언급되면 그걸로 대체
+      if(isBudgetMode && !extractedPayer){
+        const fallbackHit = KNOWN_PAYERS.find(p => p.match.test(text));
+        if(fallbackHit) extractedPayer = fallbackHit.name;
+      }
+
+      if(isBudgetMode){
+        const payerLinkInfo = resolvePayerLink(extractedPayer);
+        if(payerLinkInfo){
+          schedulePayerLink.href = payerLinkInfo.url;
+          schedulePayerLink.textContent = `💳 ${payerLinkInfo.label} →`;
+          schedulePayerLink.style.display = 'inline-flex';
+        }
+      }
 
       document.getElementById('scheduleExtractLoading').style.display = 'none';
       panelPhoto.style.display = 'block';
