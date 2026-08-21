@@ -3054,6 +3054,46 @@
     });
   }
 
+  function sleep(ms){ return new Promise(resolve => setTimeout(resolve, ms)); }
+
+  function isOverloadedError(message){
+    const m = (message || '').toLowerCase();
+    return m.includes('overloaded') || m.includes('high demand') || m.includes('503') || m.includes('unavailable');
+  }
+
+  /* Gemini 호출 시 서버 과부하(503/high demand) 응답이면 잠깐 대기 후 자동 재시도 */
+  async function fetchGeminiWithRetry(body, maxRetries = 2){
+    let lastErr = null;
+    for(let attempt = 0; attempt <= maxRetries; attempt++){
+      try{
+        const response = await fetch('/api/gemini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(body)
+        });
+        const data = await response.json();
+        if(!response.ok){
+          const errMsg = (data && data.error) || ('API 오류: ' + response.status);
+          if(isOverloadedError(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg)) && attempt < maxRetries){
+            lastErr = new Error(errMsg);
+            await sleep(1200 * (attempt + 1));
+            continue;
+          }
+          throw new Error(errMsg);
+        }
+        return data;
+      } catch(err){
+        if(isOverloadedError(err.message) && attempt < maxRetries){
+          lastErr = err;
+          await sleep(1200 * (attempt + 1));
+          continue;
+        }
+        throw err;
+      }
+    }
+    throw lastErr || new Error('알 수 없는 오류가 발생했어요.');
+  }
+
   function buildPrompt(job, note){
     const base = note ? `유저의 요청: "${note}"` : '유저가 별도 설명을 남기지 않았어요.';
     const priorityNote = note
@@ -3136,24 +3176,17 @@
       const promptText = buildPrompt(currentJob, note);
       const filePart = { inline_data: { mime_type: mediaType, data: base64Data } };
 
-      const response = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'gemini-3.6-flash',
-          contents: [{
-            role: 'user',
-            parts: [
-              filePart,
-              { text: promptText }
-            ]
-          }],
-          generationConfig: { maxOutputTokens: 16000 }
-        })
+      const data = await fetchGeminiWithRetry({
+        model: 'gemini-3.6-flash',
+        contents: [{
+          role: 'user',
+          parts: [
+            filePart,
+            { text: promptText }
+          ]
+        }],
+        generationConfig: { maxOutputTokens: 16000 }
       });
-
-      const data = await response.json();
-      if(!response.ok){ throw new Error(data.error || ('API 오류: ' + response.status)); }
 
       const candidate = (data.candidates && data.candidates[0]) || {};
       let aiText = ((candidate.content && candidate.content.parts) || [])
@@ -3289,17 +3322,11 @@
     loadingBubble.classList.add('loading');
 
     try{
-      const response = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'gemini-3.6-flash',
-          contents: outgoingMessages,
-          generationConfig: { maxOutputTokens: 4096 }
-        })
+      const data = await fetchGeminiWithRetry({
+        model: 'gemini-3.6-flash',
+        contents: outgoingMessages,
+        generationConfig: { maxOutputTokens: 4096 }
       });
-      const data = await response.json();
-      if(!response.ok){ throw new Error(data.error || ('API 오류: ' + response.status)); }
 
       const candidate = (data.candidates && data.candidates[0]) || {};
       let replyText = ((candidate.content && candidate.content.parts) || [])
@@ -3658,24 +3685,18 @@
       const year = new Date().getFullYear();
       const promptText = `이 사진은 시험 일정표 또는 시간표예요. 사진에서 확인되는 모든 일정을 아래 형식으로만, 한 줄에 하나씩 출력하세요. 다른 설명, 인사말, 제목 없이 목록만 출력하세요.\n형식: YYYY-MM-DD | 과목명 또는 일정명\n연도가 사진에 안 보이면 ${year}년으로 가정하세요. 요일만 있고 정확한 날짜가 없으면 알 수 있는 범위에서 추정하세요.`;
 
-      const response = await fetch('/api/gemini', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          model: 'gemini-3.6-flash',
-          contents: [{
-            role: 'user',
-            parts: [
-              { inline_data: { mime_type: mediaType, data: base64Data } },
-              { text: promptText }
-            ]
-          }],
-          generationConfig: { maxOutputTokens: 2048 }
-        })
+      const data = await fetchGeminiWithRetry({
+        model: 'gemini-3.6-flash',
+        contents: [{
+          role: 'user',
+          parts: [
+            { inline_data: { mime_type: mediaType, data: base64Data } },
+            { text: promptText }
+          ]
+        }],
+        generationConfig: { maxOutputTokens: 2048 }
       });
 
-      const data = await response.json();
-      if(!response.ok){ throw new Error(data.error || ('API 오류: ' + response.status)); }
       const candidate = (data.candidates && data.candidates[0]) || {};
       const text = ((candidate.content && candidate.content.parts) || [])
         .filter(p => p.text)
