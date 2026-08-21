@@ -2,6 +2,15 @@
   "functions": {
     "api/gemini.js": {
       "maxDuration": 60
+    },
+    "api/send-reminders.js": {
+      "maxDuration": 30
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/send-reminders",
+      "schedule": "0 0 * * *"
+    }
+  ]
 }
