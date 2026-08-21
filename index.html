@@ -1949,6 +1949,8 @@
       <h1 class="page-title" id="scheduleTitle" data-i18n="scheduleTitle">내 일정</h1>
       <p class="sub" id="scheduleSub" style="margin-bottom:24px;" data-i18n="scheduleSub">직접 입력하거나, 사진을 올려서 한 번에 추가하세요.</p>
 
+      <button type="button" class="preview-back copy-btn" id="reminderSubscribeBtn" style="margin-bottom:20px;">🔔 리마인드 알림 받기</button>
+
       <div class="schedule-tabs">
         <button type="button" class="schedule-tab selected" id="tabManual" data-tab="manual" data-i18n="tabManual">✏️ 직접 입력</button>
         <button type="button" class="schedule-tab" id="tabPhoto" data-tab="photo" data-i18n="tabPhoto">📷 사진 업로드</button>
@@ -2123,7 +2125,7 @@
         <ul>
           <li>마이데이터 연동 자동 가계부 반영</li>
           <li>납부 마감일 리마인드 알림</li>
-          <li>결제 링크 자동 연동</li>
+          <li>결제처 바로가기 안내</li>
         </ul>
       </div>
       <div class="fcard">
@@ -3208,7 +3210,7 @@
           const scheduleTitle = m[2].trim();
           const parsedAmount = Number(m[3]);
           autoAddedAmount = parsedAmount > 0 ? parsedAmount : null;
-          scheduleItems.push({
+          addScheduleItem({
             date: autoAddedDate,
             note: scheduleTitle || note || '(설명 없음)',
             summary: '영수증/고지서에서 자동 추가',
@@ -3342,7 +3344,7 @@
         const addedDate = m[1];
         const addedTitle = m[2].trim();
         const addedAmount = Number(m[3]);
-        scheduleItems.push({
+        addScheduleItem({
           date: addedDate,
           note: addedTitle || '(대화에서 추가)',
           summary: '대화에서 자동 추가',
@@ -3383,6 +3385,84 @@
   /* ---- In-app schedule (내 일정) ---- */
   let scheduleItems = [];
   let lastResultThumb = '';
+  let pushSubscription = null;
+
+  function addScheduleItem(item){
+    scheduleItems.push(item);
+    syncScheduleToServer();
+  }
+
+  function urlBase64ToUint8Array(base64String){
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const rawData = atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+    for(let i = 0; i < rawData.length; ++i){ outputArray[i] = rawData.charCodeAt(i); }
+    return outputArray;
+  }
+
+  async function syncScheduleToServer(){
+    if(!currentNickname) return;
+    try{
+      await fetch('/api/save-schedule', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: currentNickname,
+          subscription: pushSubscription,
+          scheduleItems: scheduleItems
+        })
+      });
+    } catch(err){ /* 동기화 실패는 조용히 무시 — 다음 변경 때 다시 시도됨 */ }
+  }
+
+  async function subscribeToReminders(){
+    const btn = document.getElementById('reminderSubscribeBtn');
+    if(!('serviceWorker' in navigator) || !('PushManager' in window)){
+      toast.textContent = '이 브라우저에서는 알림 구독이 지원되지 않아요.';
+      toast.classList.add('show');
+      setTimeout(()=>{ toast.classList.remove('show'); }, 2400);
+      return;
+    }
+    try{
+      const permission = await Notification.requestPermission();
+      if(permission !== 'granted'){
+        toast.textContent = '알림 권한을 허용해야 리마인드를 받을 수 있어요.';
+        toast.classList.add('show');
+        setTimeout(()=>{ toast.classList.remove('show'); }, 2600);
+        return;
+      }
+      const keyRes = await fetch('/api/vapid-public-key');
+      const { publicKey } = await keyRes.json();
+      if(!publicKey){
+        toast.textContent = '알림 설정이 아직 준비되지 않았어요.';
+        toast.classList.add('show');
+        setTimeout(()=>{ toast.classList.remove('show'); }, 2600);
+        return;
+      }
+      const registration = await navigator.serviceWorker.ready;
+      const existing = await registration.pushManager.getSubscription();
+      pushSubscription = existing || await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey)
+      });
+      await syncScheduleToServer();
+      if(btn){
+        btn.textContent = '🔔 알림 받는 중이에요';
+        btn.disabled = true;
+      }
+      toast.textContent = '내일 마감인 일정을 알림으로 알려드릴게요.';
+      toast.classList.add('show');
+      setTimeout(()=>{ toast.classList.remove('show'); }, 2600);
+    } catch(err){
+      toast.textContent = '알림 구독에 실패했어요. 다시 시도해주세요.';
+      toast.classList.add('show');
+      setTimeout(()=>{ toast.classList.remove('show'); }, 2600);
+    }
+  }
+
+  const reminderSubscribeBtn = document.getElementById('reminderSubscribeBtn');
+  if(reminderSubscribeBtn) reminderSubscribeBtn.addEventListener('click', subscribeToReminders);
 
   const homeSchedule = document.getElementById('homeSchedule');
   const scheduleOpenBtn = document.getElementById('scheduleOpenBtn');
@@ -3647,7 +3727,7 @@
     if(!date){ err.textContent = '날짜를 선택해주세요'; return; }
     if(!title){ err.textContent = '일정 내용을 입력해주세요'; return; }
     err.textContent = '';
-    scheduleItems.push({ date, note: title, summary: '직접 입력', thumb: '', amount });
+    addScheduleItem({ date, note: title, summary: '직접 입력', thumb: '', amount });
     document.getElementById('manualTitle').value = '';
     document.getElementById('manualAmount').value = '';
     renderSchedule();
@@ -3710,7 +3790,7 @@
       lines.forEach(line=>{
         const m = line.match(re);
         if(m){
-          scheduleItems.push({
+          addScheduleItem({
             date: m[1],
             note: m[2],
             summary: '사진에서 자동 추출',
