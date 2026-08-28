@@ -1745,26 +1745,6 @@
     <p class="sub" data-i18n="stylePageSub">몇 가지만 알려주시면, 같은 사진도 회원님 스타일에 맞게 정리해드려요.</p>
 
     <div class="quiz-block">
-      <div class="quiz-label">MBTI (알고 계시면 골라주세요)</div>
-      <div class="quiz-toggle-row" data-axis="ei">
-        <button type="button" class="quiz-toggle" data-value="E">E · 외향</button>
-        <button type="button" class="quiz-toggle" data-value="I">I · 내향</button>
-      </div>
-      <div class="quiz-toggle-row" data-axis="sn">
-        <button type="button" class="quiz-toggle" data-value="S">S · 현실적</button>
-        <button type="button" class="quiz-toggle" data-value="N">N · 직관적</button>
-      </div>
-      <div class="quiz-toggle-row" data-axis="tf">
-        <button type="button" class="quiz-toggle" data-value="T">T · 논리적</button>
-        <button type="button" class="quiz-toggle" data-value="F">F · 감성적</button>
-      </div>
-      <div class="quiz-toggle-row" data-axis="jp">
-        <button type="button" class="quiz-toggle" data-value="J">J · 계획형</button>
-        <button type="button" class="quiz-toggle" data-value="P">P · 즉흥형</button>
-      </div>
-    </div>
-
-    <div class="quiz-block">
       <div class="quiz-label">결과는 어떤 스타일이 좋아요?</div>
       <div class="job-list" id="styleOptions">
         <button type="button" class="job-row" data-style="핵심만">
@@ -2716,24 +2696,13 @@
 
   /* ---- SIGNUP STEP 3: 성향 분석 (MBTI + 스타일 + 톤) ---- */
   const signupPage3 = document.getElementById('signupPage3');
-  let userPrefs = { mbti: {}, style: '', tone: '' };
+  let userPrefs = { style: '', tone: '' };
 
   function openSignupStep3(){
     signupPage2.classList.remove('active');
     signupPage3.classList.add('active');
     window.scrollTo({top:0});
   }
-
-  document.querySelectorAll('.quiz-toggle-row').forEach(row=>{
-    const axis = row.dataset.axis;
-    row.querySelectorAll('.quiz-toggle').forEach(btn=>{
-      btn.addEventListener('click', ()=>{
-        row.querySelectorAll('.quiz-toggle').forEach(b=>b.classList.remove('selected'));
-        btn.classList.add('selected');
-        userPrefs.mbti[axis] = btn.dataset.value;
-      });
-    });
-  });
 
   document.querySelectorAll('#styleOptions .job-row').forEach(row=>{
     row.addEventListener('click', ()=>{
@@ -3255,17 +3224,7 @@
       '간결한 사무체': '감정 표현 없이 사무적이고 건조한 문체로 답하세요.'
     }[userPrefs.tone] || '';
 
-    const mbti = userPrefs.mbti || {};
-    const mbtiParts = [];
-    if(mbti.tf === 'T') mbtiParts.push('논리와 근거를 우선해서 설명하세요.');
-    if(mbti.tf === 'F') mbtiParts.push('공감되는 표현과 격려를 살짝 곁들이세요.');
-    if(mbti.sn === 'S') mbtiParts.push('추상적인 말보다 구체적이고 실용적인 표현을 쓰세요.');
-    if(mbti.sn === 'N') mbtiParts.push('전체 맥락이나 큰 그림을 함께 짚어주세요.');
-    if(mbti.jp === 'J') mbtiParts.push('할 일을 순서/단계로 명확히 정리하세요.');
-    if(mbti.jp === 'P') mbtiParts.push('너무 딱딱한 순서보다는 유연하게 제안하세요.');
-    const mbtiNote = mbtiParts.join(' ');
-
-    const personalization = [styleNote, toneNote, mbtiNote].filter(Boolean).join(' ');
+    const personalization = [styleNote, toneNote].filter(Boolean).join(' ');
     const personalizationBlock = personalization
       ? `\n\n[이 유저에게 맞춘 스타일 지침 — 반드시 반영] ${personalization}`
       : '';
