@@ -2257,6 +2257,29 @@
   const signupPage2 = document.getElementById('signupPage2');
   let selectedJob = '';
   let pendingUser = { nickname:'', email:'' };
+
+  /* ---- 계정 서버 저장/조회 (새로고침해도 로그인 유지되게) ---- */
+  async function lookupServerAccount(provider, id){
+    if(!id) return null;
+    try{
+      const res = await fetch(`/api/account?provider=${encodeURIComponent(provider)}&id=${encodeURIComponent(id)}`);
+      if(!res.ok) return null;
+      const data = await res.json();
+      return data.account || null;
+    } catch(err){ return null; }
+  }
+
+  async function saveServerAccount(provider, id, nickname, email, job){
+    if(!id) return;
+    try{
+      await fetch('/api/account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ provider, id, nickname, email, job })
+      });
+    } catch(err){ /* 실패해도 로컬 세션은 정상 진행되게 조용히 무시 */ }
+  }
+
   let registeredUsers = [];
   let userStore = {};
 
@@ -2486,11 +2509,28 @@
         closeAuth();
         closeSignup();
         enterHome(match.nickname, match.job, true);
-      } else {
-        closeAuth();
-        pendingUser = { nickname: googleName, email: googleEmail, password: null, viaGoogle: true };
-        openSignupStep2();
+        return;
       }
+
+      // 로컬 목록엔 없어도, 예전에 만든 계정이 서버에 남아있는지 확인 (새로고침/다른 기기 대비)
+      const serverAccount = await lookupServerAccount('google', googleEmail);
+      if(serverAccount){
+        registeredUsers.push({
+          nickname: serverAccount.nickname,
+          email: googleEmail,
+          password: null,
+          job: serverAccount.job,
+          kakaoId: null
+        });
+        closeAuth();
+        closeSignup();
+        enterHome(serverAccount.nickname, serverAccount.job, true);
+        return;
+      }
+
+      closeAuth();
+      pendingUser = { nickname: googleName, email: googleEmail, password: null, viaGoogle: true };
+      openSignupStep2();
     } catch(err){
       toast.textContent = 'Google 프로필을 불러오지 못했어요. 다시 시도해주세요.';
       toast.classList.add('show');
@@ -2522,7 +2562,7 @@
   }
   initKakao();
 
-  function handleKakaoProfile(res){
+  async function handleKakaoProfile(res){
     const kakaoId = res.id;
     const account = res.kakao_account || {};
     const props = res.properties || {};
@@ -2534,11 +2574,28 @@
       closeAuth();
       closeSignup();
       enterHome(match.nickname, match.job, true);
-    } else {
-      closeAuth();
-      pendingUser = { nickname, email, password: null, kakaoId };
-      openSignupStep2();
+      return;
     }
+
+    // 로컬 목록엔 없어도, 예전에 만든 계정이 서버에 남아있는지 확인 (새로고침/다른 기기 대비)
+    const serverAccount = await lookupServerAccount('kakao', kakaoId);
+    if(serverAccount){
+      registeredUsers.push({
+        nickname: serverAccount.nickname,
+        email,
+        password: null,
+        job: serverAccount.job,
+        kakaoId
+      });
+      closeAuth();
+      closeSignup();
+      enterHome(serverAccount.nickname, serverAccount.job, true);
+      return;
+    }
+
+    closeAuth();
+    pendingUser = { nickname, email, password: null, kakaoId };
+    openSignupStep2();
   }
 
   function handleKakaoLogin(){
@@ -2684,6 +2741,11 @@
       job: pendingUser.job,
       kakaoId: pendingUser.kakaoId || null
     });
+    if(pendingUser.kakaoId){
+      saveServerAccount('kakao', pendingUser.kakaoId, pendingUser.nickname, pendingUser.email, pendingUser.job);
+    } else if(pendingUser.email){
+      saveServerAccount('google', pendingUser.email, pendingUser.nickname, pendingUser.email, pendingUser.job);
+    }
     closeSignup();
     enterHome(pendingUser.nickname, pendingUser.job, false);
   }
@@ -4134,6 +4196,12 @@
 
     const userRecord = registeredUsers.find(u => u.nickname === oldNickname);
     if(userRecord) userRecord.nickname = newNickname;
+
+    if(userRecord && userRecord.kakaoId){
+      saveServerAccount('kakao', userRecord.kakaoId, newNickname, userRecord.email, userRecord.job);
+    } else if(userRecord && userRecord.email){
+      saveServerAccount('google', userRecord.email, newNickname, userRecord.email, userRecord.job);
+    }
 
     if(userStore[oldNickname]){
       userStore[newNickname] = userStore[oldNickname];
