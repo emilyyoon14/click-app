@@ -2788,6 +2788,10 @@
     scheduleItems = userStore[nickname].scheduleItems;
     topicHistory = userStore[nickname].topicHistory;
 
+    if(isLogin){
+      loadUserDataFromServer(nickname);
+    }
+
     document.getElementById('homeGreetEyebrow').textContent = isLogin ? 'Welcome back' : 'Welcome';
     document.getElementById('homeGreet').textContent = t('homeGreetNamed', nickname);
     document.getElementById('homeSub').textContent = jobLabel
@@ -3404,6 +3408,7 @@
         tag, note: note || '(설명 없음)', aiText: lastSummaryText, thumb: thumbSrc,
         time: new Date().toLocaleString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
       });
+      syncScheduleToServer();
 
       conversationMessages = [
         { role:'user', parts: [
@@ -3559,10 +3564,43 @@
         body: JSON.stringify({
           userId: currentNickname,
           subscription: pushSubscription,
-          scheduleItems: scheduleItems
+          scheduleItems: scheduleItems,
+          chatHistory: chatHistory,
+          topicHistory: topicHistory
         })
       });
     } catch(err){ /* 동기화 실패는 조용히 무시 — 다음 변경 때 다시 시도됨 */ }
+  }
+
+  async function loadUserDataFromServer(nickname){
+    try{
+      const res = await fetch(`/api/save-schedule?userId=${encodeURIComponent(nickname)}`);
+      if(!res.ok) return;
+      const data = await res.json();
+      const record = data.record;
+      if(!record || userStore[nickname].__loadedFromServer) return;
+
+      // 서버에 저장된 기록이 있고, 현재 화면(로컬)에 아직 아무것도 없을 때만 덮어써요.
+      // (같은 세션에서 이미 뭔가 분석했는데 서버 데이터로 덮어써서 잃어버리는 걸 방지)
+      if(Array.isArray(record.chatHistory) && chatHistory.length === 0){
+        chatHistory.push(...record.chatHistory);
+      }
+      if(Array.isArray(record.scheduleItems) && scheduleItems.length === 0){
+        scheduleItems.push(...record.scheduleItems);
+      }
+      if(Array.isArray(record.topicHistory) && topicHistory.length === 0){
+        topicHistory.push(...record.topicHistory);
+      }
+      if(record.subscription) pushSubscription = record.subscription;
+      userStore[nickname].__loadedFromServer = true;
+
+      renderHistory();
+      renderSchedule();
+      if(pushSubscription){
+        const btn = document.getElementById('reminderSubscribeBtn');
+        if(btn){ btn.textContent = '🔔 알림 받는 중이에요'; btn.disabled = true; }
+      }
+    } catch(err){ /* 조용히 무시 — 로컬 상태는 그대로 유지 */ }
   }
 
   async function subscribeToReminders(){
