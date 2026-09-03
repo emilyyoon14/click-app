@@ -70,6 +70,57 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   nav .wrap{
     display:flex; align-items:center; justify-content:space-between;
     height:64px;
+    position:relative;
+  }
+  .onboarding-hint{
+    position:absolute;
+    top:calc(100% + 14px);
+    right:28px;
+    max-width:260px;
+    background:var(--ink);
+    color:#fff;
+    padding:14px 34px 14px 16px;
+    border-radius:14px;
+    font-family:var(--font-body);
+    font-size:12.5px;
+    line-height:1.55;
+    box-shadow:0 12px 30px -10px rgba(19,38,53,0.4);
+    z-index:39;
+    animation:hintFadeIn .35s ease .3s both;
+  }
+  .onboarding-hint::before{
+    content:'';
+    position:absolute;
+    top:-7px;
+    right:34px;
+    width:14px; height:14px;
+    background:var(--ink);
+    transform:rotate(45deg);
+    border-radius:2px;
+  }
+  .onboarding-hint p{ margin:0; position:relative; }
+  .onboarding-hint-close{
+    position:absolute;
+    top:8px; right:10px;
+    background:none;
+    border:none;
+    color:rgba(255,255,255,0.6);
+    font-size:12px;
+    cursor:pointer;
+    padding:4px;
+    line-height:1;
+  }
+  .onboarding-hint-close:hover{ color:#fff; }
+  .onboarding-hint.hidden{ display:none; }
+  @keyframes hintFadeIn{
+    from{ opacity:0; transform:translateY(-6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @media (max-width:520px){
+    .onboarding-hint{
+      right:16px;
+      max-width:calc(100vw - 32px);
+    }
   }
   .logo{
     font-family:var(--font-display);
@@ -2019,6 +2070,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     <div class="nav-actions">
       <button type="button" class="nav-link" id="loginBtn">로그인</button>
       <button type="button" class="nav-cta" id="signupBtn">회원가입</button>
+    </div>
+    <div class="onboarding-hint" id="onboardingHint">
+      <button type="button" class="onboarding-hint-close" id="onboardingHintClose" aria-label="닫기">✕</button>
+      <p>회원가입하고 로그인하면, 사진 한 장으로 AI가 알아서 요약·가계부·일정까지 정리해드려요.</p>
     </div>
   </div>
 </nav>
@@ -4297,6 +4352,38 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   }
 
   applyLanguage(currentLang);
+
+  /* ---- 첫 방문자용 온보딩 힌트 (로그인/회원가입 버튼 안내) ---- */
+  (function initOnboardingHint(){
+    const hint = document.getElementById('onboardingHint');
+    const closeBtn = document.getElementById('onboardingHintClose');
+    if(!hint) return;
+
+    const DISMISS_KEY = 'click_onboarding_dismissed';
+    if(localStorage.getItem(DISMISS_KEY)){
+      hint.classList.add('hidden');
+      return;
+    }
+    // 이미 로그인 기록이 있는 사람(재방문자)에게는 안 보여줘도 돼요
+    if(registeredUsers && registeredUsers.length > 0){
+      hint.classList.add('hidden');
+      return;
+    }
+
+    function dismissHint(){
+      hint.classList.add('hidden');
+      try{ localStorage.setItem(DISMISS_KEY, '1'); } catch(err){}
+    }
+
+    closeBtn.addEventListener('click', dismissHint);
+    const loginBtnEl = document.getElementById('loginBtn');
+    const signupBtnEl = document.getElementById('signupBtn');
+    if(loginBtnEl) loginBtnEl.addEventListener('click', dismissHint);
+    if(signupBtnEl) signupBtnEl.addEventListener('click', dismissHint);
+
+    // 10초 넘게 안 읽고 스크롤하거나 다른 행동을 해도 자연스럽게 사라지게
+    setTimeout(dismissHint, 9000);
+  })();
 </script>
 
 
