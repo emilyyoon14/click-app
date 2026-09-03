@@ -3132,8 +3132,39 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       .replace(/(?<!\*)\*([^*]+?)\*(?!\*)/g, '<em>$1</em>');
   }
 
+  /* AI가 혹시라도 LaTeX 문법을 섞어 쓴 경우를 대비한 보험 — 흔한 패턴을 일반 텍스트로 변환 */
+  function stripLatex(text){
+    if(!text) return text;
+    let out = text;
+    // \text{내용}, \mathrm{내용} 등 -> 내용만 남김
+    out = out.replace(/\\(?:text|mathrm|mathbf|mathit)\{([^}]*)\}/g, '$1');
+    // 위첨자/아래첨자: x^{2} -> x², A_{i} -> Aᵢ (간단한 케이스는 그대로 두고 실패하면 원문 유지)
+    out = out.replace(/\^\{([^}]*)\}/g, '^$1');
+    out = out.replace(/_\{([^}]*)\}/g, '_$1');
+    // 자주 쓰이는 기호 명령어 -> 유니코드 기호
+    const symbolMap = {
+      '\\rightarrow': '→', '\\to': '→', '\\leftarrow': '←',
+      '\\times': '×', '\\cdot': '·', '\\div': '÷',
+      '\\pm': '±', '\\leq': '≤', '\\geq': '≥', '\\neq': '≠', '\\approx': '≈',
+      '\\alpha': 'α', '\\beta': 'β', '\\gamma': 'γ', '\\delta': 'δ',
+      '\\Delta': 'Δ', '\\pi': 'π', '\\infty': '∞', '\\sqrt': '√'
+    };
+    Object.keys(symbolMap).forEach(key=>{
+      out = out.split(key).join(symbolMap[key]);
+    });
+    // \frac{a}{b} -> a/b
+    out = out.replace(/\\frac\{([^}]*)\}\{([^}]*)\}/g, '$1/$2');
+    // 남은 $...$ / $$...$$ 감싸기 기호만 제거 (내용은 유지)
+    out = out.replace(/\${1,2}([^$]+)\${1,2}/g, '$1');
+    // 남은 불필요한 백슬래시 명령어 흔적 정리 (안전하게, 문자만 있는 경우만)
+    out = out.replace(/\\([a-zA-Z]+)/g, '$1');
+    // 중괄호 없이 붙은 단순 위첨자/아래첨자도 정리: P_i -> Pi, x^2는 그대로 둠(가독성)
+    out = out.replace(/_([a-zA-Z0-9])/g, '$1');
+    return out;
+  }
+
   function mdToHtml(md){
-    const lines = (md || '').replace(/\r\n/g, '\n').split('\n');
+    const lines = stripLatex(md || '').replace(/\r\n/g, '\n').split('\n');
     let html = '';
     let i = 0;
     while(i < lines.length){
@@ -3295,7 +3326,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       ? `\n\n[이 유저에게 맞춘 스타일 지침 — 반드시 반영] ${personalization}`
       : '';
 
-    return taskPart + personalizationBlock;
+    const formatRule = `\n\n[형식 규칙 — 반드시 지킬 것] 수식·화학식·기호를 표현할 때 LaTeX 문법(예: $...$, \\text{}, \\rightarrow, \\frac{}{}, 위첨자/아래첨자 백슬래시 표기 등)을 절대 쓰지 마세요. 그냥 일반 텍스트와 유니코드 기호로만 표현하세요. 예를 들어 "$\\text{ATP} \\rightarrow \\text{ADP} + \\text{P}_i$" 대신 "ATP → ADP + Pi"처럼, "$x^2$" 대신 "x²"처럼 쓰세요.`;
+
+    return taskPart + personalizationBlock + formatRule;
   }
 
   document.getElementById('photoSend').addEventListener('click', sendCurrentFile);
