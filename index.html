@@ -4386,21 +4386,14 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
   applyLanguage(currentLang);
 
-  /* ---- 첫 방문자용 온보딩 힌트 (로그인/회원가입 버튼 안내) ---- */
+  /* ---- 방문할 때마다 항상 뜨는 온보딩 힌트 (로그인/회원가입 버튼 안내) ---- */
   (function initOnboardingHint(){
     const hint = document.getElementById('onboardingHint');
     const closeBtn = document.getElementById('onboardingHintClose');
     if(!hint) return;
 
-    const DISMISS_KEY = 'click_onboarding_dismissed';
-    if(localStorage.getItem(DISMISS_KEY)){
-      hint.classList.add('hidden');
-      return;
-    }
-
     function dismissHint(){
       hint.classList.add('hidden');
-      try{ localStorage.setItem(DISMISS_KEY, '1'); } catch(err){}
     }
 
     closeBtn.addEventListener('click', dismissHint);
@@ -4408,9 +4401,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     const signupBtnEl = document.getElementById('signupBtn');
     if(loginBtnEl) loginBtnEl.addEventListener('click', dismissHint);
     if(signupBtnEl) signupBtnEl.addEventListener('click', dismissHint);
-
-    // 10초 넘게 안 읽고 스크롤하거나 다른 행동을 해도 자연스럽게 사라지게
-    setTimeout(dismissHint, 9000);
   })();
 </script>
 
