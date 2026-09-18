@@ -1490,6 +1490,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   .result-chat-area{
     width:100%;
     margin-top:6px;
+    margin-bottom:20px;
     text-align:left;
   }
   .result-chat-log{
@@ -3413,9 +3414,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       : '';
     let taskPart;
     if(job === '학생'){
-      taskPart = `당신은 학생을 위한 학습 도우미 앱 "click"의 AI예요. 첨부된 자료를 보고, ${base}${priorityNote}\n\n답변의 맨 첫 줄에는 반드시 아래 형식으로 이 자료의 핵심 개념/단원을 짧게 적어주세요 (이 줄은 시스템이 자동으로 "자주 막히는 주제"를 추적하는 데 씁니다, 화면엔 이 줄만 따로 안 보여요):\n주제: 2~4단어로 된 핵심 개념명\n\n그 다음 줄부터, 유저가 별도 요청을 하지 않았다면 아래 기본 형식을 따르세요:\n1) 핵심 3줄 요약\n2) 헷갈리기 쉬운 용어 1~2개 해설\n3) 예상 문제 1개\n4) 다음에 뭘 더 보면 좋을지 한 줄 제안 (단순 요약이 아니라, "다음엔 ~을 더 연습해보세요" 같은 방향 제시로)`;
+      taskPart = `당신은 학생을 위한 학습 도우미 앱 "click"의 AI예요. 첨부된 자료를 보고, ${base}${priorityNote}\n\n답변의 맨 첫 줄에는 반드시 아래 형식으로 이 자료의 핵심 개념/단원을 짧게 적어주세요 (이 줄은 시스템이 자동으로 "자주 막히는 주제"를 추적하는 데 씁니다, 화면엔 이 줄만 따로 안 보여요):\n주제: 2~4단어로 된 핵심 개념명\n\n그 다음 줄부터, 유저가 별도 요청을 하지 않았다면 아래 기본 형식을 따르세요. 각 섹션 제목은 반드시 "**굵게**" 표시하고, 앞에 번호(1. 이나 1) 등)를 붙이지 마세요 (번호를 붙이면 화면에서 번호가 꼬여서 보입니다):\n**핵심 3줄 요약**\n**헷갈리기 쉬운 용어 해설** (1~2개)\n**예상 문제** (1개)\n**다음 학습 제안** (단순 요약이 아니라, "다음엔 ~을 더 연습해보세요" 같은 방향 제시로)`;
     } else if(job === '직장인'){
-      taskPart = `당신은 직장인을 위한 정리 도우미 앱 "click"의 AI예요. 첨부된 영수증/고지서/문서를 보고, ${base}${priorityNote}\n\n답변의 맨 첫 줄에는 반드시 아래 형식으로 납부기한(또는 관련 날짜), 짧은 제목, 총액을 적어주세요 (이 줄은 시스템이 자동으로 가계부·캘린더에 등록하는 데 씁니다):\n일정: YYYY-MM-DD | 짧은 제목 | 숫자만된 총액(원 단위, 쉼표 없이)\n날짜를 찾을 수 없으면 "일정: 없음" 이라고만 적어주세요. 금액을 알 수 없으면 마지막 칸에 0을 적어주세요. 연도가 안 보이면 ${new Date().getFullYear()}년으로 가정하세요.\n\n둘째 줄에는 반드시 아래 형식으로 이 고지서/영수증을 납부·결제할 수 있는 곳(결제처)을 적어주세요 (이 줄도 화면엔 따로 안 보이고, 시스템이 "결제처 바로가기" 버튼을 만드는 데 씁니다):\n결제처: 결제처 이름 (예: 위택스, 국세청 홈택스, KT, 국민은행, 관리사무소 등)\n결제처를 알 수 없으면 "결제처: 없음" 이라고만 적어주세요.\n\n그 다음 줄부터, 유저가 별도 요청을 하지 않았다면 아래 기본 형식을 따르세요:\n1) 항목/금액 정리\n2) 납부기한이나 특이사항 (있다면)\n3) 한 줄 처리 제안`;
+      taskPart = `당신은 직장인을 위한 정리 도우미 앱 "click"의 AI예요. 첨부된 영수증/고지서/문서를 보고, ${base}${priorityNote}\n\n답변의 맨 첫 줄에는 반드시 아래 형식으로 납부기한(또는 관련 날짜), 짧은 제목, 총액을 적어주세요 (이 줄은 시스템이 자동으로 가계부·캘린더에 등록하는 데 씁니다):\n일정: YYYY-MM-DD | 짧은 제목 | 숫자만된 총액(원 단위, 쉼표 없이)\n날짜를 찾을 수 없으면 "일정: 없음" 이라고만 적어주세요. 금액을 알 수 없으면 마지막 칸에 0을 적어주세요. 연도가 안 보이면 ${new Date().getFullYear()}년으로 가정하세요.\n\n둘째 줄에는 반드시 아래 형식으로 이 고지서/영수증을 납부·결제할 수 있는 곳(결제처)을 적어주세요 (이 줄도 화면엔 따로 안 보이고, 시스템이 "결제처 바로가기" 버튼을 만드는 데 씁니다):\n결제처: 결제처 이름 (예: 위택스, 국세청 홈택스, KT, 국민은행, 관리사무소 등)\n결제처를 알 수 없으면 "결제처: 없음" 이라고만 적어주세요.\n\n그 다음 줄부터, 유저가 별도 요청을 하지 않았다면 아래 기본 형식을 따르세요. 각 섹션 제목은 반드시 "**굵게**" 표시하고, 앞에 번호(1. 이나 1) 등)를 붙이지 마세요 (번호를 붙이면 화면에서 번호가 꼬여서 보입니다):\n**항목/금액 정리**\n**납부기한이나 특이사항** (있다면)\n**한 줄 처리 제안**`;
     } else {
       taskPart = `당신은 귀찮은 일을 대신 정리해주는 앱 "click"의 AI예요. 첨부된 자료를 보고, ${base}${priorityNote}\n\n유저가 별도 요청을 하지 않았다면, 핵심을 3줄 이내로 정리해주세요.`;
     }
@@ -3658,6 +3659,24 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   async function sendFollowUp(){
     const text = resultChatInput.value.trim();
     if(!text) return;
+
+    // conversationMessages가 어떤 이유로든 비어있으면, 현재 기록(currentChatHistoryItem)이나
+    // 마지막 분석 결과(lastSummaryText)를 근거로 자동 복구를 시도함 — 원인과 무관하게 항상 이어서 대화 가능하게
+    if(conversationMessages.length === 0){
+      const source = currentChatHistoryItem || (chatHistory && chatHistory[0]);
+      if(source && source.aiText){
+        conversationMessages = [
+          { role:'user', parts: [{ text: `(이전 요청: ${source.note || ''})` }] },
+          { role:'model', parts: [{ text: source.aiText }] }
+        ];
+        if(!currentChatHistoryItem) currentChatHistoryItem = source;
+      } else if(lastSummaryText){
+        conversationMessages = [
+          { role:'model', parts: [{ text: lastSummaryText }] }
+        ];
+      }
+    }
+
     if(conversationMessages.length === 0){
       appendChatBubble('ai', '먼저 사진을 분석한 뒤에 대화를 이어갈 수 있어요.', false);
       return;
@@ -4410,6 +4429,12 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
           { inline_data: { mime_type: dataUrlMatch[1], data: dataUrlMatch[2] } },
           { text: `(이전 요청: ${item.note})` }
         ]},
+        { role:'model', parts: [{ text: item.aiText }] }
+      ];
+    } else if(item.aiText){
+      // 원본 사진이 없거나(예: 예전 기록) 손상된 경우, 최소한 결과 텍스트를 근거로 대화를 이어갈 수 있게
+      conversationMessages = [
+        { role:'user', parts: [{ text: `(이전 요청: ${item.note})` }] },
         { role:'model', parts: [{ text: item.aiText }] }
       ];
     } else {
