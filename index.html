@@ -597,6 +597,63 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     color:var(--muted);
     max-width:420px;
   }
+  .coach-list{
+    margin-top:24px;
+    max-width:460px;
+    width:100%;
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+  .coach-bubble{
+    position:relative;
+    background:var(--paper);
+    border-radius:14px;
+    padding:14px 100px 14px 18px;
+    text-align:left;
+    box-shadow:0 8px 22px -16px rgba(19,38,53,0.35);
+    animation:coachFadeIn .4s ease both;
+  }
+  .coach-bubble::before{
+    content:'';
+    position:absolute;
+    left:22px;
+    bottom:-7px;
+    width:16px; height:16px;
+    background:var(--paper);
+    clip-path:polygon(0 0, 100% 0, 0 100%);
+    border-radius:0 0 0 3px;
+  }
+  .coach-bubble-text{
+    font-family:var(--font-body);
+    font-size:13.5px;
+    line-height:1.5;
+    color:var(--ink);
+    margin:0;
+  }
+  .coach-bubble-btn{
+    position:absolute;
+    right:16px;
+    bottom:14px;
+    background:none;
+    border:none;
+    color:var(--flash-deep);
+    font-family:var(--font-body);
+    font-weight:700;
+    font-size:12px;
+    cursor:pointer;
+    white-space:nowrap;
+    padding:0;
+  }
+  .coach-bubble-btn:hover{ text-decoration:underline; }
+  @keyframes coachFadeIn{
+    from{ opacity:0; transform:translateY(-6px); }
+    to{ opacity:1; transform:translateY(0); }
+  }
+  @media (max-width:480px){
+    .coach-bubble{ padding:14px 16px 40px 16px; }
+    .coach-bubble-btn{ right:16px; bottom:12px; }
+  }
   .home-capture{ display:flex; flex-direction:column; align-items:center; }
   .home-preview{
     display:none;
@@ -1909,6 +1966,9 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     <h1 class="home-greet" id="homeGreet">안녕하세요.</h1>
     <p class="sub" id="homeSub" data-i18n="homeSubDefault">오늘의 귀찮음을 사진 한 장으로 끝내보세요.</p>
+
+    <div class="coach-list" id="coachList"></div>
+
     <div class="shutter-zone" style="margin-top:48px;">
       <div class="shutter-outline"></div>
       <button class="shutter" id="homeShutterBtn" aria-label="click">
@@ -2866,6 +2926,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       badge.style.display = 'none';
     }
 
+    renderCoachCard();
+
     appHome.classList.add('active');
     document.body.style.overflow = 'hidden';
     appHome.scrollTop = 0;
@@ -3640,6 +3702,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   async function syncScheduleToServer(){
     if(!currentNickname) return;
     persistLocalStore(); // 서버 요청 성공 여부와 무관하게, 브라우저에도 항상 즉시 저장
+    renderCoachCard(); // 데이터가 바뀔 때마다 홈 화면 코치 카드도 최신 상태로 갱신
     try{
       await fetch('/api/save-schedule', {
         method: 'POST',
@@ -3679,6 +3742,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       renderHistory();
       renderSchedule();
+      renderCoachCard();
       if(pushSubscription){
         const btn = document.getElementById('reminderSubscribeBtn');
         if(btn){ btn.textContent = '🔔 알림 받는 중이에요'; btn.disabled = true; }
@@ -3874,6 +3938,81 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       const list = sorted.slice(0,3).map(([t])=>t).join(', ');
       box.innerHTML = `<div class="topic-insight-label">📌 지금까지 본 주제</div><div class="topic-insight-text">${list}</div>`;
     }
+  }
+
+  function renderCoachCard(){
+    const list = document.getElementById('coachList');
+    if(!list) return;
+    list.innerHTML = '';
+
+    if(!currentNickname) return;
+
+    const insights = [];
+    const today = todayStr();
+    const tomorrow = (()=>{ const d = new Date(); d.setDate(d.getDate()+1); return d.toISOString().slice(0,10); })();
+
+    // 마감 임박한 일정 — 모든 직업군 공통 (오늘/내일 마감인 것 전부, 최대 2개)
+    const dueItems = (scheduleItems || []).filter(it => it.date === today || it.date === tomorrow).slice(0, 2);
+    dueItems.forEach(dueItem=>{
+      const dueLabel = dueItem.date === today ? '오늘' : '내일';
+      const amountPart = dueItem.amount != null && dueItem.amount !== '' ? ` (₩${Number(dueItem.amount).toLocaleString('ko-KR')})` : '';
+      insights.push({
+        text: `${dueLabel}까지 ${dueItem.note}${amountPart} 마감이에요.`,
+        btnLabel: '지금 확인해보기',
+        action: ()=>{ scheduleOpenBtn.click(); }
+      });
+    });
+
+    // 학생 — 반복해서 막힌 주제
+    if(currentJob === '학생' && (topicHistory || []).length > 0){
+      const counts = {};
+      topicHistory.forEach(t => { counts[t.topic] = (counts[t.topic] || 0) + 1; });
+      const sorted = Object.entries(counts).sort((a,b)=> b[1]-a[1]);
+      const top = sorted[0];
+      if(top && top[1] >= 2){
+        insights.push({
+          text: `이번 주 "${top[0]}" ${top[1]}번 틀렸어요. 지금 5분만 다시 볼까요?`,
+          btnLabel: '지금 확인해보기',
+          action: ()=>{ openHistoryDrawer(); }
+        });
+      }
+    }
+
+    // 직장인 — 이번 달 지출이 지난달보다 늘었을 때
+    if(currentJob === '직장인' && (scheduleItems || []).length > 0){
+      const now = new Date();
+      const thisPrefix = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+      const lastMonthDate = new Date(now.getFullYear(), now.getMonth()-1, 1);
+      const lastPrefix = `${lastMonthDate.getFullYear()}-${String(lastMonthDate.getMonth()+1).padStart(2,'0')}`;
+      const sum = (prefix)=> scheduleItems
+        .filter(it => it.date && it.date.startsWith(prefix) && it.amount != null && it.amount !== '')
+        .reduce((s, it) => s + Number(it.amount), 0);
+      const thisTotal = sum(thisPrefix);
+      const lastTotal = sum(lastPrefix);
+      if(lastTotal > 0 && thisTotal > lastTotal){
+        insights.push({
+          text: `이번 달 지출이 지난달보다 늘었어요. 확인해볼래요?`,
+          btnLabel: '지금 확인해보기',
+          action: ()=>{ scheduleOpenBtn.click(); }
+        });
+      }
+    }
+
+    insights.forEach(insight=>{
+      const bubble = document.createElement('div');
+      bubble.className = 'coach-bubble';
+      const p = document.createElement('p');
+      p.className = 'coach-bubble-text';
+      p.textContent = insight.text;
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'coach-bubble-btn';
+      btn.textContent = insight.btnLabel;
+      btn.addEventListener('click', insight.action);
+      bubble.appendChild(p);
+      bubble.appendChild(btn);
+      list.appendChild(bubble);
+    });
   }
 
   function updateScheduleTheme(){
