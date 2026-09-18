@@ -2050,7 +2050,6 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     </div>
     <button type="button" class="preview-back copy-btn" id="resultCopy" data-i18n="resultCopy">결과 복사하기</button>
     <button type="button" class="preview-back copy-btn" id="resultChatBtn" data-i18n="resultChatBtn">💬 대화 이어서 하기</button>
-    <button type="button" class="field-submit" id="resultDone" data-i18n="resultDone">확인했어요</button>
 
     <div class="result-chat-area" id="resultChatArea" style="display:none;">
       <div class="result-chat-log" id="resultChatLog"></div>
@@ -2059,6 +2058,8 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         <button type="button" class="chat-send-btn" id="resultChatSend" aria-label="보내기">➤</button>
       </div>
     </div>
+
+    <button type="button" class="field-submit" id="resultDone" data-i18n="resultDone">확인했어요</button>
   </div>
 
   <div class="home-schedule" id="homeSchedule">
@@ -3197,6 +3198,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
   let chatHistory = [];
   let topicHistory = [];
   let conversationMessages = [];
+  let currentChatHistoryItem = null; // 지금 보고 있는 기록 항목 — 대화 이어서 하기 내용을 여기에 계속 저장함
   const resultChatArea = document.getElementById('resultChatArea');
   const resultChatLog = document.getElementById('resultChatLog');
   const resultChatInput = document.getElementById('resultChatInput');
@@ -3598,8 +3600,10 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
       chatHistory.unshift({
         tag, note: note || '(설명 없음)', aiText: lastSummaryText, thumb: compactThumb,
-        time: new Date().toLocaleString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' })
+        time: new Date().toLocaleString('ko-KR', { month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit' }),
+        followUp: []
       });
+      currentChatHistoryItem = chatHistory[0];
       syncScheduleToServer();
 
       conversationMessages = [
@@ -3709,6 +3713,13 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       loadingBubble.classList.remove('loading');
       loadingBubble.innerHTML = mdToHtml(replyText);
       resultChatLog.scrollTop = resultChatLog.scrollHeight;
+
+      if(currentChatHistoryItem){
+        if(!Array.isArray(currentChatHistoryItem.followUp)) currentChatHistoryItem.followUp = [];
+        currentChatHistoryItem.followUp.push({ role:'user', text });
+        currentChatHistoryItem.followUp.push({ role:'ai', text: replyText });
+        syncScheduleToServer();
+      }
     } catch(err){
       loadingBubble.classList.remove('loading');
       loadingBubble.textContent = '오류가 발생했어요: ' + err.message;
@@ -4391,6 +4402,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
     resultChatLog.innerHTML = '';
     resultChatArea.style.display = 'none';
+    currentChatHistoryItem = item;
     const dataUrlMatch = (item.thumb || '').match(/^data:([^;]+);base64,(.+)$/);
     if(dataUrlMatch){
       conversationMessages = [
@@ -4402,6 +4414,15 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
       ];
     } else {
       conversationMessages = [];
+    }
+    if(Array.isArray(item.followUp) && item.followUp.length > 0){
+      item.followUp.forEach(turn=>{
+        appendChatBubble(turn.role === 'user' ? 'user' : 'ai', turn.role === 'user' ? turn.text : mdToHtml(turn.text), turn.role !== 'user');
+        conversationMessages.push({
+          role: turn.role === 'user' ? 'user' : 'model',
+          parts: [{ text: turn.text }]
+        });
+      });
     }
   }
 
@@ -4564,6 +4585,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     photoNote.value = '';
     suggestChips.innerHTML = '';
     conversationMessages = [];
+    currentChatHistoryItem = null;
     resultChatLog.innerHTML = '';
     resultChatArea.style.display = 'none';
     document.getElementById('previewThumbWrap').style.display = 'block';
