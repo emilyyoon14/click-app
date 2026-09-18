@@ -3896,6 +3896,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
     scheduleList.querySelectorAll('.schedule-card-del').forEach(btn=>{
       btn.addEventListener('click', ()=>{
         scheduleItems.splice(Number(btn.dataset.idx), 1);
+        syncScheduleToServer();
         renderCalendar();
         renderDayDetail();
         renderBudgetTotal();
@@ -4313,6 +4314,7 @@ height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
         e.stopPropagation();
         const i = Number(btn.dataset.idx);
         chatHistory.splice(i, 1);
+        syncScheduleToServer();
         renderHistory();
       });
     });
